@@ -3,6 +3,8 @@ package co.jp.enon.tms.timemaintenance.service;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +15,8 @@ import co.jp.enon.tms.common.BaseService;
 import co.jp.enon.tms.timemaintenance.dao.PtWorkBreakDao;
 import co.jp.enon.tms.timemaintenance.dao.PtWorkReportDao;
 import co.jp.enon.tms.timemaintenance.dao.PtWorkSessionDao;
+import co.jp.enon.tms.timemaintenance.dao.PvUserWorkReportDao;
+import co.jp.enon.tms.timemaintenance.dto.UserWorkReportDto;
 import co.jp.enon.tms.timemaintenance.dto.WorkBreakInsertDto;
 import co.jp.enon.tms.timemaintenance.dto.WorkBreakUpdateDto;
 import co.jp.enon.tms.timemaintenance.dto.WorkReportInsertDto;
@@ -20,6 +24,7 @@ import co.jp.enon.tms.timemaintenance.dto.WorkReportUpdateDto;
 import co.jp.enon.tms.timemaintenance.entity.PtWorkBreak;
 import co.jp.enon.tms.timemaintenance.entity.PtWorkReport;
 import co.jp.enon.tms.timemaintenance.entity.PtWorkSession;
+import co.jp.enon.tms.timemaintenance.entity.PvUserWorkReport;
 
 @Service
 public class TimeService extends BaseService {
@@ -33,6 +38,9 @@ public class TimeService extends BaseService {
 	
 	@Autowired
 	private PtWorkBreakDao ptWorkBreakDao;
+	
+	@Autowired
+	PvUserWorkReportDao pvUserWorkReportDao;
 	
 	public void saveWorkReportWithSession(WorkReportInsertDto workReportInsertDto) throws Exception {
 	    var reqHd = workReportInsertDto.getReqHd();
@@ -69,7 +77,7 @@ public class TimeService extends BaseService {
 	    } catch (Exception ex) {
 	    	
 	    	workReportInsertDto.setResultCode("002");
-	    	workReportInsertDto.setResultMessage("（Method：insert, Table Name：pt_work_report / pt_work_session ,Exception：" + ex.getMessage() + "）");
+	    	workReportInsertDto.setResultMessage("（Method：saveWorkReportWithSession, Table Name：pt_work_report / pt_work_session ,Exception：" + ex.getMessage() + "）");
 	    }
 	    return;
 	}
@@ -133,7 +141,7 @@ public class TimeService extends BaseService {
 	        workReportUpdateDto.setResultCode("000");
 		 } catch (Exception ex) {
 			 workReportUpdateDto.setResultCode("002");
-			 workReportUpdateDto.setResultMessage("（Method：update, Table Name：pt_work_report / pt_work_session ,Exception：" + ex.getMessage() + "）");
+			 workReportUpdateDto.setResultMessage("（Method：updateWorkReportWithSession, Table Name：pt_work_report / pt_work_session ,Exception：" + ex.getMessage() + "）");
 	    }
 		return;
 	}
@@ -154,7 +162,7 @@ public class TimeService extends BaseService {
 	        workBreakInsertDto.setResultCode("000");
 		 } catch (Exception ex) {
 			 workBreakInsertDto.setResultCode("002");
-			 workBreakInsertDto.setResultMessage("（Method：insert, Table Name：pt_work_break ,Exception：" + ex.getMessage() + "）");
+			 workBreakInsertDto.setResultMessage("（Method：saveWorkBreakStart, Table Name：pt_work_break ,Exception：" + ex.getMessage() + "）");
 	    }
 		return;		
 	}
@@ -180,20 +188,86 @@ public class TimeService extends BaseService {
 	        workBreakUpdateDto.setResultCode("000");
 	       
 		 } catch (Exception ex) {
+			 ex.printStackTrace();
 			 workBreakUpdateDto.setResultCode("002");
-			 workBreakUpdateDto.setResultMessage("（Method：update, Table Name：pt_work_break ,Exception：" + ex.getMessage() + "）");
+			 workBreakUpdateDto.setResultMessage("（Method：updateWorkBreak, Table Name：pt_work_break ,Exception：" + ex.getMessage() + "）");
 	    }
 		return;		
+	}
+	
+	public void getUserWorkReport(UserWorkReportDto userWorkReportDto) throws Exception {
+		var reqHd = userWorkReportDto.getReqHd();
+		try {
+			List<PvUserWorkReport> listPvUserWorkReport = pvUserWorkReportDao.getUserWorkReport(reqHd.getFirstName(), reqHd.getLastName(), reqHd.getStartDate(), reqHd.getEndDate());
+			// Report data not found 
+			if (listPvUserWorkReport == null || listPvUserWorkReport.isEmpty()) {
+				userWorkReportDto.setResultCode("001"); // No User Report data found
+				return;
+		    }
+			
+			// All rows share same user info
+		    PvUserWorkReport first = listPvUserWorkReport.get(0);
+		    UserWorkReportDto.ResponseHd resHd = userWorkReportDto.getResHd();
+		    resHd.setUserId(first.getUserId());
+		    resHd.setFirstName(first.getFirstName());
+		    resHd.setLastName(first.getLastName());
+		    resHd.setWorkInfos(new ArrayList<>());
+		    
+		    List<UserWorkReportDto.ResponseDt> resDtList = new ArrayList<>();
+		    UserWorkReportDto.ResponseDt currentSession = null;
+		    Integer currentSessionId = null;
+		    LocalDate currentDate = null;
+		    
+		    for (PvUserWorkReport row : listPvUserWorkReport) {
+		        // If new date, update daily totals
+		        if (currentDate == null || !currentDate.equals(row.getWorkDate())) {
+		            currentDate = row.getWorkDate();
+		            UserWorkReportDto.ResponseHd.WorkInfo workInfo = new UserWorkReportDto.ResponseHd.WorkInfo();
+		            workInfo.setWorkDate(currentDate);
+		            workInfo.setDailyWorkTime(row.getDailyWorkTime());
+		            workInfo.setDailyBreakTime(row.getDailyBreakTime());
+		            resHd.getWorkInfos().add(workInfo);
+		        }
+		        // If new session, create new ResponseDt
+		        if (currentSessionId == null || !currentSessionId.equals(row.getWorkSessionId())) {
+		            currentSession = new UserWorkReportDto.ResponseDt();
+		            currentSessionId = row.getWorkSessionId();
+
+		            currentSession.setWorkSessionId(row.getWorkSessionId());
+		            currentSession.setSessionStart(row.getSessionStart());
+		            currentSession.setSessionEnd(row.getSessionEnd());
+		            currentSession.setSessionWorkTime(row.getSessionWorkTime());
+		            currentSession.setSessionBreakTime(row.getSessionBreakTime());
+		            currentSession.setBreaks(new ArrayList<>());
+
+		            resDtList.add(currentSession);
+		        }
+		        // Add break if present
+		        if (row.getWorkBreakId() != null) {
+		            UserWorkReportDto.ResponseDt.BreakInfo breakInfo = new UserWorkReportDto.ResponseDt.BreakInfo();
+		            breakInfo.setWorkBreakId(row.getWorkBreakId());
+		            breakInfo.setBreakStart(row.getBreakStart());
+		            breakInfo.setBreakEnd(row.getBreakEnd());
+		            breakInfo.setBreakDuration(row.getBreakDuration());
+		            currentSession.getBreaks().add(breakInfo);
+		        }
+		    }
+		    userWorkReportDto.setResDt(resDtList);   	
+			userWorkReportDto.setResultCode("000");
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			userWorkReportDto.setResultCode("002");
+			userWorkReportDto.setResultMessage("（Method：getUserWorkReport ,Exception while fetching user report Data：" + ex.getMessage() + "）");
+	    }
+		return;	
 	}
 	
 	private int calculateBreakMinutes(LocalTime breakStart, LocalTime breakEnd) {
 	    if (breakStart == null || breakEnd == null) {
 	        return 0; // or handle appropriately
 	    }
-
 	    // Duration between the two times
 	    Duration duration = Duration.between(breakStart, breakEnd);
-
 	    // Return total minutes
 	    return (int) duration.toMinutes();
 	}

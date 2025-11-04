@@ -9,7 +9,7 @@ import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode(callSuper=false)
 @Data
-public class WorkBreakInsertDto  extends BaseDto {
+public class WorkBreakInsertDto extends BaseDto {
 	private static final long serialVersionUID = 1L;
 
 	// Defining a no-arg constructor

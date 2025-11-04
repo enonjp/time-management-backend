@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import co.jp.enon.tms.timemaintenance.dto.UserWorkReportDto;
 import co.jp.enon.tms.timemaintenance.dto.WorkBreakInsertDto;
 import co.jp.enon.tms.timemaintenance.dto.WorkBreakUpdateDto;
 import co.jp.enon.tms.timemaintenance.dto.WorkReportInsertDto;
@@ -59,6 +60,16 @@ public class TimeMaintenanceController {
 		timeService.updateWorkBreak(workBreakUpdateDto);
 		
 		return workBreakUpdateDto;     
+    }
+	
+	// Start button click
+	@PostMapping("/get-report")
+    public UserWorkReportDto getReport(@RequestBody UserWorkReportDto userWorkReportDto) throws Exception {
+		logger.debug(this.getClass().getName() + "." + Thread.currentThread().getStackTrace()[1].getMethodName());
+		
+		timeService.getUserWorkReport(userWorkReportDto);
+		
+		return userWorkReportDto;     
     }
 	
 	
