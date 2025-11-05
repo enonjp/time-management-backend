@@ -20,6 +20,7 @@ public class UserWorkReportDto extends BaseDto {
         reqHd = new RequestHd();
         resHd = new ResponseHd();
         resDt = new ArrayList<ResponseDt>();
+        resDtTitle = new ResponseDtTitle();
         super.setTranId(this.getClass().getName());
     }
     private RequestHd reqHd;
@@ -89,5 +90,29 @@ public class UserWorkReportDto extends BaseDto {
             private Integer breakDuration; // minutes
         }
     }
+    
+	@Data
+	public static class ResponseDtTitle implements Serializable {
+	    private static final long serialVersionUID = 1L;
+
+	    public ResponseDtTitle() {}
+
+		private final String userId = "User ID";
+		private final String firstName = "First Name";
+		private final String lastName = "Last Name";
+		private final String workDate = "Work Date";
+		private final String dailyWorkTime = "Work Time";
+		private final String dailyBreakTime = "Break Time";
+		private final String workSessionId = "Session Id";
+		private final String sessionStart = "Session Start Time";
+		private final String sessionEnd = "Session End Time";
+		private final String sessionWorkTime = "Session Work Time";
+		private final String sessionBreakTime = "Session Break Time";
+		private final String workBreakId = "Break Id";
+		private final String breakStart = "Break Start Time";
+		private final String breakEnd = "Break End Time";
+		private final String breakDuration = "Break Duration";
+	}
+
     
 }

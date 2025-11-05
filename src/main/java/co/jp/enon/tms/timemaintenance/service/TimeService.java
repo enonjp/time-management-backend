@@ -252,7 +252,9 @@ public class TimeService extends BaseService {
 		            currentSession.getBreaks().add(breakInfo);
 		        }
 		    }
-		    userWorkReportDto.setResDt(resDtList);   	
+		    userWorkReportDto.setResDt(resDtList); 
+		    UserWorkReportDto.ResponseDtTitle responseDtTitle = new UserWorkReportDto.ResponseDtTitle();
+		    userWorkReportDto.setResDtTitle(responseDtTitle);
 			userWorkReportDto.setResultCode("000");
 		} catch (Exception ex) {
 			ex.printStackTrace();
