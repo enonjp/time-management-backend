@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS pt_work_break (
     work_break_id INT AUTO_INCREMENT PRIMARY KEY,
     work_session_id INT NOT NULL,
     break_start TIME NOT NULL,
-    break_end TIME DEFAULT 0 ,
+    break_end TIME DEFAULT NULL,
     break_time INT DEFAULT 0 COMMENT 'Break duration in minutes',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
