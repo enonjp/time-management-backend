@@ -16,7 +16,9 @@ import co.jp.enon.tms.timemaintenance.dao.PtWorkBreakDao;
 import co.jp.enon.tms.timemaintenance.dao.PtWorkReportDao;
 import co.jp.enon.tms.timemaintenance.dao.PtWorkSessionDao;
 import co.jp.enon.tms.timemaintenance.dao.PvUserWorkReportDao;
+import co.jp.enon.tms.timemaintenance.dao.PvUserWorkSessionBreakDao;
 import co.jp.enon.tms.timemaintenance.dao.PvUserWorkSessionDao;
+import co.jp.enon.tms.timemaintenance.dto.CurrentUserBreakInfoDto;
 import co.jp.enon.tms.timemaintenance.dto.CurrentUserSessionInfoDto;
 import co.jp.enon.tms.timemaintenance.dto.UserWorkReportDto;
 import co.jp.enon.tms.timemaintenance.dto.WorkBreakInsertDto;
@@ -28,6 +30,7 @@ import co.jp.enon.tms.timemaintenance.entity.PtWorkReport;
 import co.jp.enon.tms.timemaintenance.entity.PtWorkSession;
 import co.jp.enon.tms.timemaintenance.entity.PvUserWorkReport;
 import co.jp.enon.tms.timemaintenance.entity.PvUserWorkSession;
+import co.jp.enon.tms.timemaintenance.entity.PvUserWorkSessionBreak;
 
 @Service
 public class TimeService extends BaseService {
@@ -47,6 +50,9 @@ public class TimeService extends BaseService {
 	
 	@Autowired
 	PvUserWorkSessionDao pvUserWorkSessionDao;
+	
+	@Autowired
+	PvUserWorkSessionBreakDao pvUserWorkSessionBreakDao;
 	
 	public void saveWorkReportWithSession(WorkReportInsertDto workReportInsertDto) throws Exception {
 	    var reqHd = workReportInsertDto.getReqHd();
@@ -91,7 +97,7 @@ public class TimeService extends BaseService {
 	public void updateWorkReportWithSession(WorkReportUpdateDto workReportUpdateDto) throws Exception {
 		 var reqHd = workReportUpdateDto.getReqHd();	 
 		 try { 	 
-			 //get all break times pt_work_break using session id where endtime is null
+			 // get all break times pt_work_break using session id where endtime is null
 			 // calculate break time using start and end times
 			 // update the end time and breakTime
 			 PtWorkBreak ptWorkBreakOld = ptWorkBreakDao.getActiveBreakTimeUsingSessionId(reqHd.getWorkSessionId());
@@ -134,7 +140,7 @@ public class TimeService extends BaseService {
 	         if (totalWorkTime <= 0) {
 	        	 totalWorkTime = 0;
 	         } 	 
-		    //get workReportId from pt_work_report 
+		    // get workReportId from pt_work_report 
 			LocalDate workDate = LocalDate.parse(reqHd.getWorkDate());
 			PtWorkReport ptWorkReport = new PtWorkReport();
 			ptWorkReport.setUserId(reqHd.getUserId());
@@ -176,7 +182,7 @@ public class TimeService extends BaseService {
 	public void updateWorkBreak(WorkBreakUpdateDto workBreakUpdateDto) throws Exception {
 		var reqHd = workBreakUpdateDto.getReqHd();	
 		try { 
-			//get break start from  pt_work_break
+			// get break start from  pt_work_break
 			LocalTime breakStart = ptWorkBreakDao.getBreakStartTime(reqHd.getWorkBreakId(), reqHd.getWorkSessionId());
 			
 			int totalBreakInMinutes = calculateBreakMinutes(breakStart, reqHd.getBreakEnd());
@@ -294,6 +300,31 @@ public class TimeService extends BaseService {
 			currentUserSessionInfoDto.setResultMessage("（Method：getLatestUserSessionInfo ,Exception while fetching user session Data：" + ex.getMessage() + "）");
 	    }
 		return;	
+	}
+	
+	public void getLatestUserBreakInfo(CurrentUserBreakInfoDto currentUserBreakInfoDto) throws Exception {
+		var reqHd = currentUserBreakInfoDto.getReqHd();
+		try {
+			PvUserWorkSessionBreak pvUserWorkSessionBreak = pvUserWorkSessionBreakDao.getLatestBreakForUser(reqHd.getUserId());
+			if (pvUserWorkSessionBreak == null ) {
+				currentUserBreakInfoDto.setResultMessage(" No User break data found for userId: " + reqHd.getUserId());
+				currentUserBreakInfoDto.setResultCode("001"); // No User break data found
+				return;
+		    }
+			CurrentUserBreakInfoDto.ResponseHd responseHd = currentUserBreakInfoDto.getResHd();
+			responseHd.setWorkSessionId(pvUserWorkSessionBreak.getWorkSessionId());
+			responseHd.setWorkBreakId(pvUserWorkSessionBreak.getWorkBreakId());
+			responseHd.setBreakStart(pvUserWorkSessionBreak.getBreakStart());
+			responseHd.setBreakEnd(pvUserWorkSessionBreak.getBreakEnd());
+			responseHd.setBreakTime(pvUserWorkSessionBreak.getBreakTime());
+			
+			currentUserBreakInfoDto.setResultCode("000");
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			currentUserBreakInfoDto.setResultCode("002");
+			currentUserBreakInfoDto.setResultMessage("（Method：getLatestUserBreakInfo ,Exception while fetching user break Data：" + ex.getMessage() + "）");
+	    }
+		return;
 	}
 	
 	

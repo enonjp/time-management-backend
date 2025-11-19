@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import co.jp.enon.tms.timemaintenance.dto.CurrentUserBreakInfoDto;
 import co.jp.enon.tms.timemaintenance.dto.CurrentUserSessionInfoDto;
 import co.jp.enon.tms.timemaintenance.dto.UserWorkReportDto;
 import co.jp.enon.tms.timemaintenance.dto.WorkBreakInsertDto;
@@ -81,6 +82,16 @@ public class TimeMaintenanceController {
 		timeService.getLatestUserSessionInfo(currentUserSessionInfoDto);
 		
 		return currentUserSessionInfoDto;     
+    }
+	
+	// get current session info
+	@PostMapping("/get-current-break")
+    public CurrentUserBreakInfoDto getCurrentBreak(@RequestBody CurrentUserBreakInfoDto currentUserBreakInfoDto) throws Exception {
+		logger.debug(this.getClass().getName() + "." + Thread.currentThread().getStackTrace()[1].getMethodName());
+		
+		timeService.getLatestUserBreakInfo(currentUserBreakInfoDto);
+		
+		return currentUserBreakInfoDto;     
     }
 	
 	
