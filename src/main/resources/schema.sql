@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS pt_user (
     last_name VARCHAR(255) DEFAULT NULL,
     password VARCHAR(255) NOT NULL,
     reset_password_token VARCHAR(255) DEFAULT NULL,
+    reset_token_expiry TIMESTAMP DEFAULT NULL,
     role TINYINT NOT NULL DEFAULT 0 COMMENT '0 = user, 1 = admin',
     active TINYINT NOT NULL DEFAULT 0 COMMENT '0 = active, 1 = inactive',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

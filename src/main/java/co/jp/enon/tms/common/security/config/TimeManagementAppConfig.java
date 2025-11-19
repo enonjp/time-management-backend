@@ -9,6 +9,7 @@ public class TimeManagementAppConfig {
 
 	private String jwtSecret;
     private String jwtExpirationMs;
+    private String frontendResetPasswordUrl;
 
 	public void setJwtSecret(String jwtSecret) {
 		this.jwtSecret = jwtSecret;
@@ -22,5 +23,11 @@ public class TimeManagementAppConfig {
 	}
 	public String getJwtExpirationMs() {
 		return jwtExpirationMs;
+	}
+	public void setFrontendResetPasswordUrl(String frontendResetPasswordUrl) {
+		this.frontendResetPasswordUrl = frontendResetPasswordUrl;
+	}
+	public String getFrontendResetPasswordUrl() {
+		return frontendResetPasswordUrl;
 	}
 }

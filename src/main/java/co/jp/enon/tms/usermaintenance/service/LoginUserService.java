@@ -2,6 +2,7 @@ package co.jp.enon.tms.usermaintenance.service;
 
 import java.security.Principal;
 import java.security.cert.X509Certificate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -11,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -41,6 +43,9 @@ public class LoginUserService implements UserDetailsService {
 	
 	@Autowired
     private JavaMailSender mailSender;
+	
+	@Value("${tms.app.frontendResetPasswordUrl}")
+    private String frontendResetPasswordUrl;
 
 	@Override
 	//@Transactional(readOnly = true)
@@ -134,27 +139,43 @@ public class LoginUserService implements UserDetailsService {
 	}
 	
 	// Send password reset link to user
+	// In order to send gmail, follow below steps
+	// 1. Go to Google Account Security
+	// 2. Enable 2-Step Verification
+	// Generate an App Password
+	// In the same security page, go to App Passwords
+	// Select: App: Mail Device: Other (give a name like SpringBootApp)
+	// copy the generated 16 digit password and set it in spring.mail.password of the application properties file
 	 public String sendPasswordResetLink(String email) {
 		PtUser user = ptUserDao.findByEmail(email);
         if (user == null) {
-            return "User not found with email: " + email;
+            return "User with email " + email + " not found";
         }
         String token = UUID.randomUUID().toString();
+        LocalDateTime expiry = LocalDateTime.now().plusHours(1); // 1-hour token expiry
         user.setResetPasswordToken(token);
+        user.setResetTokenExpiry(expiry);
+        
         int updatedRows = ptUserDao.updateToken(user);
 
         if (updatedRows > 0) {
-        	 // Create reset link
-            String resetLink = "http://localhost:8080/api/auth/reset-password?token=" + token;
-            // Send email
+        	 // Create reset link  
+            String resetLink = frontendResetPasswordUrl + "?token=" + token;
+            // Prepare email
             SimpleMailMessage message = new SimpleMailMessage();
             message.setTo(email);
             message.setSubject("Password Reset Request");
-            message.setText("Click the link to reset your password: " + resetLink);
-            mailSender.send(message);
-            return "Password reset link sent to email: " + email;
+            message.setText("Click the link to reset your password. This link will expire in 1 hour: " + resetLink);
+            try {
+            	mailSender.send(message);
+            } catch (Exception ex) {
+                // Log the error
+                logger.error("Failed to send password reset email to {}", email, ex);
+                return "Failed to send password reset email. Please try again later.";
+            }	
+            return "Password reset link has been sent to email: " + email;
         } else {   	 
- 	       return("Something went wrong in updating password_reset_toen for " + email);
+ 	       return("Something went wrong while generating the reset link. Please try again.");
         }       
     }
 	 

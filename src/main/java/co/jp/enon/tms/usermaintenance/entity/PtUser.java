@@ -17,7 +17,9 @@ public class PtUser {
 	private String resetPasswordToken;
 	private Byte role; // 0=user 1=admin
 	private Byte active; // 0=active 1=inactive 
-
+	
+	@JsonFormat(shape = JsonFormat.Shape.ANY, pattern = "yyyy-MM-dd HH:mm:ss")
+	private LocalDateTime resetTokenExpiry;
 	@JsonFormat(shape = JsonFormat.Shape.ANY, pattern = "yyyy-MM-dd HH:mm:ss")
 	private LocalDateTime createdAt;
 	@JsonFormat(shape = JsonFormat.Shape.ANY, pattern = "yyyy-MM-dd HH:mm:ss")

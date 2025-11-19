@@ -9,6 +9,8 @@ import co.jp.enon.tms.usermaintenance.entity.PtUser;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 @Repository
 public class PtUserDao {
@@ -16,7 +18,6 @@ public class PtUserDao {
 
     public PtUserDao(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
-        System.out.println("this.jdbcTemplate " + this.jdbcTemplate);
     }
     
     // RowMapper to map ResultSet to PtUser
@@ -30,6 +31,7 @@ public class PtUserDao {
             user.setEmail(rs.getString("email"));
             user.setPassword(rs.getString("password"));
             user.setResetPasswordToken(rs.getString("reset_password_token"));
+//            user.setResetTokenExpiry(rs.getTimestamp("reset_token_expiry").toLocalDateTime());  
             user.setRole(rs.getByte("role"));
             user.setActive(rs.getByte("active"));
             user.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
@@ -61,8 +63,13 @@ public class PtUserDao {
     }
     
     public int updateToken(PtUser user) {
-        String sql = "UPDATE pt_user SET reset_password_token = ? WHERE email = ?";
-        return jdbcTemplate.update(sql, user.getResetPasswordToken(), user.getEmail());
+        String sql = "UPDATE pt_user SET reset_password_token = ?, reset_token_expiry = ? WHERE email = ?";
+     // 1. Get the LocalDateTime
+        LocalDateTime expiry = user.getResetTokenExpiry();
+
+        // 2. Convert LocalDateTime to java.sql.Timestamp
+        java.sql.Timestamp sqlTimestamp = java.sql.Timestamp.valueOf(expiry);
+        return jdbcTemplate.update(sql, user.getResetPasswordToken(), sqlTimestamp, user.getEmail());
     }
     
     public int updatePassword (PtUser user) {
