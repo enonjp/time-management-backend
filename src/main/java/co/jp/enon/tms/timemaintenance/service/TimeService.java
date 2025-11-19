@@ -16,6 +16,8 @@ import co.jp.enon.tms.timemaintenance.dao.PtWorkBreakDao;
 import co.jp.enon.tms.timemaintenance.dao.PtWorkReportDao;
 import co.jp.enon.tms.timemaintenance.dao.PtWorkSessionDao;
 import co.jp.enon.tms.timemaintenance.dao.PvUserWorkReportDao;
+import co.jp.enon.tms.timemaintenance.dao.PvUserWorkSessionDao;
+import co.jp.enon.tms.timemaintenance.dto.CurrentUserSessionInfoDto;
 import co.jp.enon.tms.timemaintenance.dto.UserWorkReportDto;
 import co.jp.enon.tms.timemaintenance.dto.WorkBreakInsertDto;
 import co.jp.enon.tms.timemaintenance.dto.WorkBreakUpdateDto;
@@ -25,6 +27,7 @@ import co.jp.enon.tms.timemaintenance.entity.PtWorkBreak;
 import co.jp.enon.tms.timemaintenance.entity.PtWorkReport;
 import co.jp.enon.tms.timemaintenance.entity.PtWorkSession;
 import co.jp.enon.tms.timemaintenance.entity.PvUserWorkReport;
+import co.jp.enon.tms.timemaintenance.entity.PvUserWorkSession;
 
 @Service
 public class TimeService extends BaseService {
@@ -41,6 +44,9 @@ public class TimeService extends BaseService {
 	
 	@Autowired
 	PvUserWorkReportDao pvUserWorkReportDao;
+	
+	@Autowired
+	PvUserWorkSessionDao pvUserWorkSessionDao;
 	
 	public void saveWorkReportWithSession(WorkReportInsertDto workReportInsertDto) throws Exception {
 	    var reqHd = workReportInsertDto.getReqHd();
@@ -201,6 +207,7 @@ public class TimeService extends BaseService {
 			List<PvUserWorkReport> listPvUserWorkReport = pvUserWorkReportDao.getUserWorkReport(reqHd.getFirstName(), reqHd.getLastName(), reqHd.getStartDate(), reqHd.getEndDate());
 			// Report data not found 
 			if (listPvUserWorkReport == null || listPvUserWorkReport.isEmpty()) {
+				userWorkReportDto.setResultMessage("Report data is null for " +reqHd.getFirstName() + " " + reqHd.getLastName()); // No User Report data found
 				userWorkReportDto.setResultCode("001"); // No User Report data found
 				return;
 		    }
@@ -263,6 +270,32 @@ public class TimeService extends BaseService {
 	    }
 		return;	
 	}
+	
+	public void getLatestUserSessionInfo(CurrentUserSessionInfoDto currentUserSessionInfoDto) throws Exception {
+		var reqHd = currentUserSessionInfoDto.getReqHd();
+		try {
+			PvUserWorkSession pvUserWorkSession = pvUserWorkSessionDao.getLatestSessionForUser(reqHd.getUserId());
+			if (pvUserWorkSession == null ) {
+				currentUserSessionInfoDto.setResultMessage(" No User session data found for userId: " + reqHd.getUserId());
+				currentUserSessionInfoDto.setResultCode("001"); // No User session data found
+				return;
+		    }
+			CurrentUserSessionInfoDto.ResponseHd responseHd = currentUserSessionInfoDto.getResHd();
+			responseHd.setWorkSessionId(pvUserWorkSession.getWorkSessionId());
+			responseHd.setSessionStart(pvUserWorkSession.getSessionStart());
+			responseHd.setSessionEnd(pvUserWorkSession.getSessionEnd());
+			responseHd.setSessionWorkTime(pvUserWorkSession.getSessionWorkTime());
+			responseHd.setSessionBreakTime(pvUserWorkSession.getSessionBreakTime());
+			
+			currentUserSessionInfoDto.setResultCode("000");
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			currentUserSessionInfoDto.setResultCode("002");
+			currentUserSessionInfoDto.setResultMessage("（Method：getLatestUserSessionInfo ,Exception while fetching user session Data：" + ex.getMessage() + "）");
+	    }
+		return;	
+	}
+	
 	
 	private int calculateBreakMinutes(LocalTime breakStart, LocalTime breakEnd) {
 	    if (breakStart == null || breakEnd == null) {
