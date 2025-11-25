@@ -14,6 +14,7 @@ import co.jp.enon.tms.timemaintenance.dto.WorkBreakInsertDto;
 import co.jp.enon.tms.timemaintenance.dto.WorkBreakUpdateDto;
 import co.jp.enon.tms.timemaintenance.dto.WorkReportInsertDto;
 import co.jp.enon.tms.timemaintenance.dto.WorkReportUpdateDto;
+import co.jp.enon.tms.timemaintenance.dto.UserSessionsTodayDto;
 import co.jp.enon.tms.timemaintenance.service.TimeService;
 
 
@@ -94,7 +95,15 @@ public class TimeMaintenanceController {
 		return currentUserBreakInfoDto;     
     }
 	
-	
+	// get current session info
+	@PostMapping("/get-today-sessions")
+    public UserSessionsTodayDto getTodaySession(@RequestBody UserSessionsTodayDto userSessionsTodayDto) throws Exception {
+		logger.debug(this.getClass().getName() + "." + Thread.currentThread().getStackTrace()[1].getMethodName());
+		
+		timeService.getTodaySessionInfo(userSessionsTodayDto);
+		
+		return userSessionsTodayDto;     
+    }
 	
 
 }

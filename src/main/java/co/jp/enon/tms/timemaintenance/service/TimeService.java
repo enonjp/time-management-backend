@@ -20,6 +20,7 @@ import co.jp.enon.tms.timemaintenance.dao.PvUserWorkSessionBreakDao;
 import co.jp.enon.tms.timemaintenance.dao.PvUserWorkSessionDao;
 import co.jp.enon.tms.timemaintenance.dto.CurrentUserBreakInfoDto;
 import co.jp.enon.tms.timemaintenance.dto.CurrentUserSessionInfoDto;
+import co.jp.enon.tms.timemaintenance.dto.UserSessionsTodayDto;
 import co.jp.enon.tms.timemaintenance.dto.UserWorkReportDto;
 import co.jp.enon.tms.timemaintenance.dto.WorkBreakInsertDto;
 import co.jp.enon.tms.timemaintenance.dto.WorkBreakUpdateDto;
@@ -273,6 +274,42 @@ public class TimeService extends BaseService {
 			ex.printStackTrace();
 			userWorkReportDto.setResultCode("002");
 			userWorkReportDto.setResultMessage("（Method：getUserWorkReport ,Exception while fetching user report Data：" + ex.getMessage() + "）");
+	    }
+		return;	
+	}
+	
+	public void getTodaySessionInfo(UserSessionsTodayDto userSessionsTodayDto) throws Exception {
+		var reqHd = userSessionsTodayDto.getReqHd();
+		try {
+			List<PvUserWorkSession> listPvUserWorkSession = pvUserWorkSessionDao.getAllUserSessionForToday(reqHd.getUserId());
+			// Session data not found 
+			if (listPvUserWorkSession == null || listPvUserWorkSession.isEmpty()) {
+				userSessionsTodayDto.setResultMessage("Session data is null "); // No User Session data found
+				userSessionsTodayDto.setResultCode("001"); // No User session data found
+				return;
+		    }
+			List<UserSessionsTodayDto.ResponseDt> resDtList = new ArrayList<>();
+			UserSessionsTodayDto.ResponseDt currentSession = null;
+			for (PvUserWorkSession row : listPvUserWorkSession) {
+				currentSession = new UserSessionsTodayDto.ResponseDt();
+
+	            currentSession.setWorkSessionId(row.getWorkSessionId());
+	            currentSession.setSessionStart(row.getSessionStart());
+	            currentSession.setSessionEnd(row.getSessionEnd());
+	            currentSession.setSessionWorkTime(row.getSessionWorkTime());
+	            currentSession.setSessionBreakTime(row.getSessionBreakTime());
+	            
+	            resDtList.add(currentSession);
+			}
+			userSessionsTodayDto.setResDt(resDtList); 
+			// userSessionsTodayDto.ResponseDtTitle responseDtTitle = new UserSessionsTodayDto.ResponseDtTitle();
+			// userSessionsTodayDto.setResDtTitle(responseDtTitle);
+			userSessionsTodayDto.setResultCode("000");
+			
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			userSessionsTodayDto.setResultCode("002");
+			userSessionsTodayDto.setResultMessage("（Method：getTodaySessionInfo ,Exception while fetching user sessions Data：" + ex.getMessage() + "）");
 	    }
 		return;	
 	}

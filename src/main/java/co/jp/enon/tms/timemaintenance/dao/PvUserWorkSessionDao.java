@@ -1,7 +1,9 @@
 package co.jp.enon.tms.timemaintenance.dao;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -51,6 +53,26 @@ public class PvUserWorkSessionDao {
                 return null;
             }
         });
+    }
+    
+    public  List<PvUserWorkSession> getAllUserSessionForToday(int userId) {
+    	String sql = """
+                SELECT 
+                    ws.*, 
+                    wr.user_id 
+                FROM pt_work_session ws
+                JOIN pt_work_report wr 
+                    ON ws.work_report_id = wr.work_report_id
+                WHERE wr.user_id = ? 
+                  AND wr.work_date = CURDATE()
+                ORDER BY ws.start_time ASC
+                """;
+
+        return jdbcTemplate.query(con -> {
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setInt(1, userId);
+            return ps;
+        }, userWorkSessionRowMapper);    
     }
     
 }
