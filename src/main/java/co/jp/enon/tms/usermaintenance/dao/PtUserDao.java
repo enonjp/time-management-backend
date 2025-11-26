@@ -46,13 +46,15 @@ public class PtUserDao {
     //Find user by email
     public PtUser findByEmail(String email) {
         String sql = "SELECT * FROM pt_user WHERE email = ?";
-        return jdbcTemplate.queryForObject(sql, userRowMapper, email);
+        List<PtUser> users = jdbcTemplate.query(sql, userRowMapper, email);
+        return  users.isEmpty() ? null : users.get(0);
     }
     
     //Find user by reset_password_token
     public PtUser findByResetPasswordToken(String token) {
-        String sql = " SELECT * FROM pt_user WHERE reset_password_token = ? AND reset_token_expiry BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 1 HOUR) ";
-        return jdbcTemplate.queryForObject(sql, userRowMapper, token);
+        String sql = " SELECT * FROM pt_user WHERE reset_password_token = ? AND DATE_ADD(reset_token_expiry, INTERVAL 1 HOUR) > NOW(); ";  
+        List<PtUser> users = jdbcTemplate.query(sql, userRowMapper, token);
+        return users.isEmpty() ? null : users.get(0);
     }
 
     // Insert new user

@@ -140,6 +140,7 @@ public class LoginUserService implements UserDetailsService {
         int updatedRows = ptUserDao.updateToken(user);
         return updatedRows > 0 ? token : null;
     }
+	
 	// Verify token and reset password
     public String resetPassword(String token, String newPassword) {
         PtUser user = ptUserDao.findByResetPasswordToken(token);
