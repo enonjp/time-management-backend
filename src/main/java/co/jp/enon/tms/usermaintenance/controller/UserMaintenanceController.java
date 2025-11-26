@@ -28,17 +28,17 @@ public class UserMaintenanceController {
 
 
 	// All user search
-	@RequestMapping(value = "/UserMaintenance/ReferUserMany", method = RequestMethod.GET)
-	//@PreAuthorize("hasRole('PM_ADMIN') or hasRole('PM_USER') or hasRole('PM_GUEST')")
+	@RequestMapping(value = "/UserMaintenance/ReferAllUser", method = RequestMethod.GET)
+//	//@PreAuthorize("hasRole('PM_ADMIN') or hasRole('PM_USER') or hasRole('PM_GUEST')")
 	public UserSearchManyDto referUserMany(
 			@RequestParam(name = "active", required = false) Byte active) throws Exception {
 		logger.debug(this.getClass().getName() + "." + Thread.currentThread().getStackTrace()[1].getMethodName());
 
 		UserSearchManyDto userSearchManyDto = new UserSearchManyDto();
 		UserSearchManyDto.RequestHd regHd = userSearchManyDto.getReqHd();
-		regHd.setActive(active);
+		regHd.setActive(active != null ? active : 0); //0 = active, 1 = inactive
 
-		userService.searchMany(userSearchManyDto);
+		userService.searchAllUsers(userSearchManyDto);
 
 		return userSearchManyDto;
 	}

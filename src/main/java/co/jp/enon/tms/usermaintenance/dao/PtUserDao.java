@@ -38,9 +38,10 @@ public class PtUserDao {
             return user;
         }
     };
-    public List<PtUser> findAll() {
-        String sql = "SELECT * FROM pt_user";
-        return jdbcTemplate.query(sql, userRowMapper);
+    public List<PtUser> findAll(Byte active) {
+        String sql = "SELECT * FROM pt_user where active = ?";
+        List<PtUser> users = jdbcTemplate.query(sql, userRowMapper, active);
+        return  users.isEmpty() ? null : users;
     }
 
     //Find user by email
@@ -83,6 +84,8 @@ public class PtUserDao {
     
     public int delete(String email) {
         String sql = "UPDATE pt_user SET active = ? WHERE email = ?";
-        return jdbcTemplate.update(sql, 1, email);
+        int result = jdbcTemplate.update(sql, 1, email);
+        jdbcTemplate.execute("COMMIT");
+        return result;
     }
 }

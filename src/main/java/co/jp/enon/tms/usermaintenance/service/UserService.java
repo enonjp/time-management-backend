@@ -14,7 +14,6 @@ import co.jp.enon.tms.common.BaseService;
 import co.jp.enon.tms.common.exception.OptimisticLockException;
 import co.jp.enon.tms.usermaintenance.dao.PtUserDao;
 import co.jp.enon.tms.usermaintenance.dto.UserDeleteDto;
-import co.jp.enon.tms.usermaintenance.dto.UserSearchAllDto;
 import co.jp.enon.tms.usermaintenance.dto.UserSearchManyDto;
 import co.jp.enon.tms.usermaintenance.dto.UserSearchOneDto;
 import co.jp.enon.tms.usermaintenance.dto.UserUpdateDto;
@@ -34,8 +33,8 @@ public class UserService extends BaseService {
     private PtUserDao ptUserDao;
 	
 	// Users search
-	public void searchMany(UserSearchManyDto userSearchManyDto) throws Exception {
-		logger.debug(this.getClass().getName() + "." + Thread.currentThread().getStackTrace()[1].getMethodName());
+//	public void searchMany(UserSearchManyDto userSearchManyDto) throws Exception {
+//		logger.debug(this.getClass().getName() + "." + Thread.currentThread().getStackTrace()[1].getMethodName());
 
 //		UserSearchManyDto.RequestHd reqHd = userSearchManyDto.getReqHd();
 //		//if deleted = 1, only then deleted users will be added
@@ -86,8 +85,8 @@ public class UserService extends BaseService {
 //		} else {
 //			userSearchManyDto.setResultCode("001");
 //		}
-		return;
-	}
+//		return;
+//	}
 
 	// Search 1 user
     public void searchOne(UserSearchOneDto userSearchOneDto) throws Exception {
@@ -158,29 +157,32 @@ public class UserService extends BaseService {
 		return;
 	}
 
-	public void searchAllUsers(UserSearchAllDto userSearchAllDto) throws Exception {
+	public void searchAllUsers(UserSearchManyDto userSearchManyDto) throws Exception {
 		logger.debug(this.getClass().getName() + "." + Thread.currentThread().getStackTrace()[1].getMethodName());
 
-		UserSearchAllDto.RequestHd reqHd = userSearchAllDto.getReqHd();
-		List<PtUser> listPtUser = ptUserDao.findAll();
-
-		List<UserSearchAllDto.ResponseDt> listResDt = userSearchAllDto.getResDt();
-		for (Iterator<PtUser> it = listPtUser.iterator(); it.hasNext();) {
-			PtUser ptUser = it.next();
-			UserSearchAllDto.ResponseDt resDt = new UserSearchAllDto.ResponseDt();
-			resDt.setUserId(ptUser.getUserId());
-		    resDt.setFirstName(ptUser.getFirstName());
-		    resDt.setLastName(ptUser.getLastName());
-			resDt.setEmail(ptUser.getEmail());
-			resDt.setRole(ptUser.getRole());
-			resDt.setActive(ptUser.getActive());
-			listResDt.add(resDt);
-		}
+		UserSearchManyDto.RequestHd reqHd = userSearchManyDto.getReqHd();
+		List<PtUser> listPtUser = ptUserDao.findAll(reqHd.getActive());
+		List<UserSearchManyDto.ResponseDt> listResDt = userSearchManyDto.getResDt();
+        if (listPtUser != null) {
+			for (Iterator<PtUser> it = listPtUser.iterator(); it.hasNext();) {
+				PtUser ptUser = it.next();
+				UserSearchManyDto.ResponseDt resDt = new UserSearchManyDto.ResponseDt();
+				resDt.setUserId(ptUser.getUserId());
+			    resDt.setFirstName(ptUser.getFirstName());
+			    resDt.setLastName(ptUser.getLastName());
+				resDt.setEmail(ptUser.getEmail());
+				resDt.setRole(ptUser.getRole());
+				resDt.setActive(ptUser.getActive());
+				resDt.setCreatedAt(ptUser.getCreatedAt());
+				resDt.setUpdatedAt(ptUser.getUpdatedAt());
+				listResDt.add(resDt);
+			}
+        }
 //		makeResponseTitle(userSearchAllDto);
 		if (listResDt.size() > 0) {
-			userSearchAllDto.setResultCode("000");
+			userSearchManyDto.setResultCode("000");
 		} else {
-			userSearchAllDto.setResultCode("001");
+			userSearchManyDto.setResultCode("001");
 		}
 		return;
 	}
