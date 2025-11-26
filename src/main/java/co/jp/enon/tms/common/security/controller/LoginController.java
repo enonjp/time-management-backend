@@ -32,6 +32,7 @@ import co.jp.enon.tms.common.security.dto.LoginRequestDto;
 import co.jp.enon.tms.common.security.dto.Response;
 import co.jp.enon.tms.usermaintenance.dto.UserInsertDto;
 import co.jp.enon.tms.usermaintenance.service.LoginUserService;
+import co.jp.enon.tms.usermaintenance.service.MailService;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -45,6 +46,9 @@ public class LoginController {
 	
 	@Autowired
 	LoginUserService loginUserService;
+	
+	@Autowired
+	MailService mailService;
 
 	@Autowired
 	JwtUtils jwtUtils;
@@ -118,9 +122,17 @@ public class LoginController {
 	 // Step 1: Request password reset
     @PostMapping("/forgot-password")
     public ResponseEntity<String> forgotPassword(@RequestParam String email) {
-        String result = loginUserService.sendPasswordResetLink(email);
-        return ResponseEntity.ok(result);
+    	String token = loginUserService.updateResetToken(email);
+    	if (token != null) {
+    		//mailService.sendResetEmail(email, token);
+            return  ResponseEntity.ok ("Password reset link has been sent to email: " + email);
+        } else {
+            return ResponseEntity.internalServerError()
+                    .body("Server error: Something went wrong while generating the reset link. Please try again.");
+        }
     }
+    
+  
 	
 	@PostMapping("/reset-password")
     public ResponseEntity<String> resetPassword(

@@ -12,10 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -40,12 +37,6 @@ public class LoginUserService implements UserDetailsService {
 	
 	@Autowired
 	private PasswordEncoder passwordEncoder; // BCryptPasswordEncoder injected automatically
-	
-	@Autowired
-    private JavaMailSender mailSender;
-	
-	@Value("${tms.app.frontendResetPasswordUrl}")
-    private String frontendResetPasswordUrl;
 
 	@Override
 	//@Transactional(readOnly = true)
@@ -96,7 +87,6 @@ public class LoginUserService implements UserDetailsService {
 	    if (certs == null || certs.length == 0) {
 	        return "";
 	    }
-
 	    try {
 	        // Get subject from the first certificate
 	        Principal principal = certs[0].getSubjectX500Principal();
@@ -138,47 +128,18 @@ public class LoginUserService implements UserDetailsService {
 	    return;
 	}
 	
-	// Send password reset link to user
-	// In order to send gmail, follow below steps
-	// 1. Go to Google Account Security
-	// 2. Enable 2-Step Verification
-	// Generate an App Password
-	// In the same security page, go to App Passwords
-	// Select: App: Mail Device: Other (give a name like SpringBootApp)
-	// copy the generated 16 digit password and set it in spring.mail.password of the application properties file
-	 public String sendPasswordResetLink(String email) {
-		PtUser user = ptUserDao.findByEmail(email);
-        if (user == null) {
-            return "User with email " + email + " not found";
-        }
+	public String updateResetToken(String email) {
+        PtUser user = ptUserDao.findByEmail(email);
+        if (user == null) return null;
+
         String token = UUID.randomUUID().toString();
-        LocalDateTime expiry = LocalDateTime.now().plusHours(1); // 1-hour token expiry
+        LocalDateTime expiry = LocalDateTime.now().plusHours(1);
         user.setResetPasswordToken(token);
         user.setResetTokenExpiry(expiry);
-        
-        int updatedRows = ptUserDao.updateToken(user);
 
-        if (updatedRows > 0) {
-        	 // Create reset link  
-            String resetLink = frontendResetPasswordUrl + "?token=" + token;
-            // Prepare email
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(email);
-            message.setSubject("Password Reset Request");
-            message.setText("Click the link to reset your password. This link will expire in 1 hour: " + resetLink);
-            try {
-            	mailSender.send(message);
-            } catch (Exception ex) {
-                // Log the error
-                logger.error("Failed to send password reset email to {}", email, ex);
-                return "Failed to send password reset email. Please try again later.";
-            }	
-            return "Password reset link has been sent to email: " + email;
-        } else {   	 
- 	       return("Something went wrong while generating the reset link. Please try again.");
-        }       
+        int updatedRows = ptUserDao.updateToken(user);
+        return updatedRows > 0 ? token : null;
     }
-	 
 	// Verify token and reset password
     public String resetPassword(String token, String newPassword) {
         PtUser user = ptUserDao.findByResetPasswordToken(token);
@@ -189,8 +150,9 @@ public class LoginUserService implements UserDetailsService {
         String encodedPassword = passwordEncoder.encode(newPassword);
         user.setPassword(encodedPassword);
         user.setResetPasswordToken(null); // clear token
+        user.setResetTokenExpiry(null);
         ptUserDao.updatePassword(user);
-        return "Password reset successfully!";
+        return "Password reset successful!";
     } 	
 
 }

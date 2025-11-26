@@ -51,7 +51,7 @@ public class PtUserDao {
     
     //Find user by reset_password_token
     public PtUser findByResetPasswordToken(String token) {
-        String sql = "SELECT * FROM pt_user WHERE reset_password_token = ?";
+        String sql = " SELECT * FROM pt_user WHERE reset_password_token = ? AND reset_token_expiry BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 1 HOUR) ";
         return jdbcTemplate.queryForObject(sql, userRowMapper, token);
     }
 
@@ -63,17 +63,20 @@ public class PtUserDao {
     
     public int updateToken(PtUser user) {
         String sql = "UPDATE pt_user SET reset_password_token = ?, reset_token_expiry = ? WHERE email = ?";
-     // 1. Get the LocalDateTime
+        // 1. Get the LocalDateTime
         LocalDateTime expiry = user.getResetTokenExpiry();
-
         // 2. Convert LocalDateTime to java.sql.Timestamp
         java.sql.Timestamp sqlTimestamp = java.sql.Timestamp.valueOf(expiry);
-        return jdbcTemplate.update(sql, user.getResetPasswordToken(), sqlTimestamp, user.getEmail());
+        int result = jdbcTemplate.update(sql, user.getResetPasswordToken(), sqlTimestamp, user.getEmail());
+        jdbcTemplate.execute("COMMIT");
+        return result;
     }
     
     public int updatePassword (PtUser user) {
-    	String sql = "UPDATE pt_user SET password = ?, reset_password_token = ? WHERE email = ?";
-        return jdbcTemplate.update(sql, user.getPassword(), user.getResetPasswordToken(), user.getEmail());
+    	String sql = "UPDATE pt_user SET password = ?, reset_password_token = ?, reset_token_expiry = ?  WHERE email = ?";
+        int result = jdbcTemplate.update(sql, user.getPassword(), user.getResetPasswordToken(), user.getResetTokenExpiry(), user.getEmail());
+        jdbcTemplate.execute("COMMIT");
+        return result;        
     }
     
     public int delete(String email) {
