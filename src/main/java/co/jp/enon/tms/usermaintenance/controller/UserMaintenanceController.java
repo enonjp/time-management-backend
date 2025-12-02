@@ -45,7 +45,9 @@ public class UserMaintenanceController {
 
 	// Search 1 user
 	@RequestMapping(value = "/UserMaintenance/ReferUserOne", method = RequestMethod.GET)
-	public UserSearchOneDto referUserOne(@RequestParam(name = "email", required = true) String email)
+	public UserSearchOneDto referUserOne(@RequestParam(name = "email", required = false) String email,
+			@RequestParam(name = "firstName", required = false) String firstName,
+			@RequestParam(name = "lastName", required = false) String lastName)
 			throws Exception {
 		logger.debug(this.getClass().getName() + "." + Thread.currentThread().getStackTrace()[1].getMethodName());
 
@@ -53,6 +55,8 @@ public class UserMaintenanceController {
 		UserSearchOneDto.RequestHd reqHd = userSearchOneDto.getReqHd();
 
 		reqHd.setEmail(email);
+	    reqHd.setFirstName(firstName);
+	    reqHd.setLastName(lastName);
 
 		userService.searchOne(userSearchOneDto);
 

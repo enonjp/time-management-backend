@@ -31,68 +31,12 @@ public class UserService extends BaseService {
 
 	@Autowired
     private PtUserDao ptUserDao;
-	
-	// Users search
-//	public void searchMany(UserSearchManyDto userSearchManyDto) throws Exception {
-//		logger.debug(this.getClass().getName() + "." + Thread.currentThread().getStackTrace()[1].getMethodName());
-
-//		UserSearchManyDto.RequestHd reqHd = userSearchManyDto.getReqHd();
-//		//if deleted = 1, only then deleted users will be added
-//		List<PvUserCompanyUserRepository> listPvUserCompanyUserRepository = pvUserCompanyUserMapper.selectManyUsers(
-//				reqHd.getCompanyId(), reqHd.getSei(), reqHd.getMei(), reqHd.getStatus(),(byte)0, reqHd.getDeleted());
-//
-//		List<UserSearchManyDto.ResponseDt> listResDt = userSearchManyDto.getResDt();
-//        int prevUserId = 0;
-//		for (Iterator<PvUserCompanyUserRepository> it = listPvUserCompanyUserRepository.iterator(); it.hasNext();) {
-//			PvUserCompanyUserRepository pvUserCompanyUserRepository = it.next();
-//			// listtrnActorSearchResDt.add(convertTranActorSearchResDt(rdbActor));
-//
-//			UserSearchManyDto.ResponseDt resDt = new UserSearchManyDto.ResponseDt();
-//			if (prevUserId != 0 && prevUserId == pvUserCompanyUserRepository.getUserId()){
-//				int indexOfLastElement = listResDt.size() - 1;
-//				listResDt.remove(indexOfLastElement);
-//				resDt.setAuthorityName("ユーザ、管理者");
-//			}else {
-//				resDt.setAuthorityName(pvUserCompanyUserRepository.getAuthorityName());
-//			}
-//			prevUserId = pvUserCompanyUserRepository.getUserId();
-//			resDt.setUserId(pvUserCompanyUserRepository.getUserId());
-//			resDt.setCompanyId(pvUserCompanyUserRepository.getCompanyId());
-//			resDt.setStatus(getStatus(pvUserCompanyUserRepository.getStatus()));
-//			if (StringUtils.isNotEmpty(pvUserCompanyUserRepository.getEmail())) {
-//				resDt.setEmail(pvUserCompanyUserRepository.getEmail());
-//			}
-//			resDt.setMei(pvUserCompanyUserRepository.getMei());
-//			resDt.setSei(pvUserCompanyUserRepository.getSei());
-//			resDt.setMeiKana(pvUserCompanyUserRepository.getMeiKana());
-//			resDt.setSeiKana(pvUserCompanyUserRepository.getSeiKana());
-//			resDt.setDeleted(pvUserCompanyUserRepository.getDeleted());
-//			resDt.setCity(pvUserCompanyUserRepository.getCity());
-//			resDt.setPhone(pvUserCompanyUserRepository.getPhone());
-//			resDt.setPrefacture(pvUserCompanyUserRepository.getPrefacture());
-//			resDt.setStreetNumber(pvUserCompanyUserRepository.getStreetNumber());
-//			resDt.setBuildingName(pvUserCompanyUserRepository.getBuildingName());
-//			resDt.setCreatedAt(pvUserCompanyUserRepository.getCreatedAt());
-//			resDt.setUpdatedAt(pvUserCompanyUserRepository.getUpdatedAt());
-//
-//			listResDt.add(resDt);
-//		}
-//
-//		makeResponseTitle(userSearchManyDto);
-//
-//		if (listResDt.size() > 0) {
-//			userSearchManyDto.setResultCode("000");
-//		} else {
-//			userSearchManyDto.setResultCode("001");
-//		}
-//		return;
-//	}
 
 	// Search 1 user
     public void searchOne(UserSearchOneDto userSearchOneDto) throws Exception {
     	logger.debug(this.getClass().getName() + "." + Thread.currentThread().getStackTrace()[1].getMethodName());
     	UserSearchOneDto.RequestHd reqHd = userSearchOneDto.getReqHd();
-        PtUser user = ptUserDao.findByEmail(reqHd.getEmail()); // JDBC call
+        PtUser user = ptUserDao.findOne(reqHd.getFirstName(), reqHd.getLastName(), reqHd.getEmail()); // JDBC call
 
         UserSearchOneDto.ResponseHd resDt = userSearchOneDto.getResHd();
         if (user != null) {

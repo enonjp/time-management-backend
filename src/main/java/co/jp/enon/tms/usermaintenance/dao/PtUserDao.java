@@ -50,6 +50,16 @@ public class PtUserDao {
         List<PtUser> users = jdbcTemplate.query(sql, userRowMapper, email);
         return  users.isEmpty() ? null : users.get(0);
     }
+    public PtUser findOne(String firstName, String lastName, String email) {
+        String sql = "SELECT * FROM pt_user WHERE  WHERE (? IS NULL OR first_name = ?) "
+        		+ " AND (? IS NULL OR last_name = ?)"
+        		+ " AND (? IS NULL OR email = ?)";
+        List<PtUser> users = jdbcTemplate.query(sql, userRowMapper, 
+        		firstName, firstName,
+                lastName, lastName,
+                email, email);
+        return  users.isEmpty() ? null : users.get(0);
+    }
     
     //Find user by reset_password_token
     public PtUser findByResetPasswordToken(String token) {

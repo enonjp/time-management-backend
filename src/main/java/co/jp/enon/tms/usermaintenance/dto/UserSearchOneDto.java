@@ -40,6 +40,8 @@ public class UserSearchOneDto extends BaseDto {
 
 		// プロパティ(メンバ変数)の宣言
 		private String email;
+		private String firstName;
+		private String lastName;
 	}
 
 	@Data
