@@ -72,7 +72,7 @@ public class TimeMaintenanceController {
     public WorkBreakUpdateDto changeBreak(@RequestBody WorkBreakUpdateDto workBreakUpdateDto) throws Exception {
 		logger.debug(this.getClass().getName() + "." + Thread.currentThread().getStackTrace()[1].getMethodName());
 		
-		timeService.changeWorkBreak(workBreakUpdateDto);
+//		timeService.changeWorkBreak(workBreakUpdateDto);
 		
 		return workBreakUpdateDto;     
     }

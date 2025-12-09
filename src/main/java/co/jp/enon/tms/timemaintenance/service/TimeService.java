@@ -80,12 +80,14 @@ public class TimeService extends BaseService {
 	        ptWorkSession.setEndTime(null); // if starting session only
 	        ptWorkSession.setWorkTime(0);
 	        ptWorkSession.setBreakTime(0);
+	        ptWorkSession.setStatus("WORKING");
 
 	        int workSessionId = ptWorkSessionDao.save(ptWorkSession);
 	        
 	        var responseHd = workReportInsertDto.getResponseHd();
 	        responseHd.setWorkReportId(workReportId);
 	        responseHd.setWorkSessionId(workSessionId);
+	        responseHd.setStatus("WORKING");
 	        
 	        workReportInsertDto.setResultCode("000");
 	    } catch (Exception ex) {
@@ -106,13 +108,13 @@ public class TimeService extends BaseService {
 			 int totalBreakInMinutes = 0; 
 			 if (ptWorkBreakOld != null) {
 				if (!ptWorkBreakOld.getBreakStart().equals(LocalTime.MIDNIGHT)) {
-					totalBreakInMinutes = calculateBreakMinutes(ptWorkBreakOld.getBreakStart(), reqHd.getBreakEnd());
+					totalBreakInMinutes = calculateBreakMinutes(ptWorkBreakOld.getBreakStart(), reqHd.getEndTime());
 				}
 				PtWorkBreak ptWorkBreak = new PtWorkBreak();
 			        
 		        ptWorkBreak.setWorkBreakId(ptWorkBreakOld.getWorkBreakId());
 		        ptWorkBreak.setWorkSessionId(ptWorkBreakOld.getWorkSessionId()); 
-		        ptWorkBreak.setBreakEnd(reqHd.getBreakEnd());
+		        ptWorkBreak.setBreakEnd(reqHd.getEndTime());
 		        ptWorkBreak.setBreakTime(totalBreakInMinutes);
 		        
 		        ptWorkBreakDao.update(ptWorkBreak);
@@ -123,15 +125,16 @@ public class TimeService extends BaseService {
 			 LocalTime sessionStartTime = ptWorkSessionDao.getStartTime(reqHd.getWorkSessionId(), reqHd.getWorkReportId());
 			 
 			// get the sum of all the work times and update the session table
-			 int sessionWorkTime = calculateBreakMinutes(sessionStartTime, reqHd.getBreakEnd());
+			 int sessionWorkTime = calculateBreakMinutes(sessionStartTime, reqHd.getEndTime());
 			// Update into pt_work_session
 			 
 	         PtWorkSession ptWorkSession = new PtWorkSession();
 	         ptWorkSession.setWorkReportId(reqHd.getWorkReportId());
 	         ptWorkSession.setWorkSessionId(reqHd.getWorkSessionId());
-	         ptWorkSession.setEndTime(reqHd.getBreakEnd()); //  session end
+	         ptWorkSession.setEndTime(reqHd.getEndTime()); //  session end
 	         ptWorkSession.setWorkTime(sessionWorkTime); // in minutes
 	         ptWorkSession.setBreakTime(breakTimeSum);
+	         ptWorkSession.setStatus("FINISHED");
 	         
 	         ptWorkSessionDao.updateWorkSession(ptWorkSession);
 			 
@@ -171,6 +174,12 @@ public class TimeService extends BaseService {
 	        
 	        int workBreakId = ptWorkBreakDao.save(ptWorkBreak);
 	        
+	        PtWorkSession ptWorkSession = new PtWorkSession();
+	        ptWorkSession.setWorkSessionId(reqHd.getWorkSessionId());
+	        ptWorkSession.setStatus("BREAK");
+	        
+	        ptWorkSessionDao.updateWorkSessionStatus(ptWorkSession);
+	        
 	        var responseHd = workBreakInsertDto.getResponseHd();	
 	        responseHd.setWorkBreakId(workBreakId);
 	        workBreakInsertDto.setResultCode("000");
@@ -199,6 +208,12 @@ public class TimeService extends BaseService {
 	        
 	        ptWorkBreakDao.update(ptWorkBreak);
 	        
+	        PtWorkSession ptWorkSession = new PtWorkSession();
+	        ptWorkSession.setWorkSessionId(reqHd.getWorkSessionId());
+	        ptWorkSession.setStatus("WORKING");
+	        
+	        ptWorkSessionDao.updateWorkSessionStatus(ptWorkSession);
+	        
 	        workBreakUpdateDto.setResultCode("000");
 	       
 		 } catch (Exception ex) {
@@ -209,53 +224,53 @@ public class TimeService extends BaseService {
 		return;		
 	}
 	
-	public void changeWorkBreak(WorkBreakUpdateDto workBreakUpdateDto) throws Exception {
-		var reqHd = workBreakUpdateDto.getReqHd();	
-		try { 
-			// get data from pt_work_break table before changing
-			PtWorkBreak ptWorkBreakOld = ptWorkBreakDao.getBreakInfo(reqHd.getWorkSessionId(), reqHd.getWorkBreakId());
-			LocalTime breakStart = ptWorkBreakOld.getBreakStart();
-			if (reqHd.getBreakStart() != null ) {
-				breakStart = reqHd.getBreakStart();
-			}
-			LocalTime breakEnd = ptWorkBreakOld.getBreakEnd();
-			if (reqHd.getBreakEnd() != null) {
-				breakEnd = reqHd.getBreakEnd();
-			}	
-			int totalBreakInMinutes = calculateBreakMinutes(breakStart, breakEnd);
-			boolean updateRequired = false;
-			if (totalBreakInMinutes != ptWorkBreakOld.getBreakTime()) {
-				updateRequired = true;
-			}
-			// change break start and break end and total break time in pt_work_break
-	        PtWorkBreak ptWorkBreak = new PtWorkBreak();
-	        
-	        ptWorkBreak.setWorkBreakId(reqHd.getWorkBreakId());
-	        ptWorkBreak.setWorkSessionId(reqHd.getWorkSessionId());
-	        ptWorkBreak.setBreakStart(breakStart);
-	        ptWorkBreak.setBreakEnd(breakEnd);
-	        ptWorkBreak.setBreakTime(totalBreakInMinutes);
-	        
-	        ptWorkBreakDao.update(ptWorkBreak);
-	        
-	        if (updateRequired == true) {
-	        	// update pt_work_session table with the new workTime and break time
-	        	//ptWorkSession.update()
-	        	
-	        	// update pt_work_report table with total work hours and break times 
-	        	
-	        	
-	        }
-	         
-	        workBreakUpdateDto.setResultCode("000");
-			
-		} catch (Exception ex) {
-			 ex.printStackTrace();
-			 workBreakUpdateDto.setResultCode("002");
-			 workBreakUpdateDto.setResultMessage("（Method：changeWorkBreak, Table Name：pt_work_break ,Exception：" + ex.getMessage() + "）");
-	    }
-		return;	
-	}
+//	public void changeWorkBreak(WorkBreakUpdateDto workBreakUpdateDto) throws Exception {
+//		var reqHd = workBreakUpdateDto.getReqHd();	
+//		try { 
+//			// get data from pt_work_break table before changing
+//			PtWorkBreak ptWorkBreakOld = ptWorkBreakDao.getBreakInfo(reqHd.getWorkSessionId(), reqHd.getWorkBreakId());
+//			LocalTime breakStart = ptWorkBreakOld.getBreakStart();
+//			if (reqHd.getBreakStart() != null ) {
+//				breakStart = reqHd.getBreakStart();
+//			}
+//			LocalTime breakEnd = ptWorkBreakOld.getBreakEnd();
+//			if (reqHd.getBreakEnd() != null) {
+//				breakEnd = reqHd.getBreakEnd();
+//			}	
+//			int totalBreakInMinutes = calculateBreakMinutes(breakStart, breakEnd);
+//			boolean updateRequired = false;
+//			if (totalBreakInMinutes != ptWorkBreakOld.getBreakTime()) {
+//				updateRequired = true;
+//			}
+//			// change break start and break end and total break time in pt_work_break
+//	        PtWorkBreak ptWorkBreak = new PtWorkBreak();
+//	        
+//	        ptWorkBreak.setWorkBreakId(reqHd.getWorkBreakId());
+//	        ptWorkBreak.setWorkSessionId(reqHd.getWorkSessionId());
+//	        ptWorkBreak.setBreakStart(breakStart);
+//	        ptWorkBreak.setBreakEnd(breakEnd);
+//	        ptWorkBreak.setBreakTime(totalBreakInMinutes);
+//	        
+//	        ptWorkBreakDao.update(ptWorkBreak);
+//	        
+//	        if (updateRequired == true) {
+//	        	// update pt_work_session table with the new workTime and break time
+//	        	//ptWorkSession.update()
+//	        	
+//	        	// update pt_work_report table with total work hours and break times 
+//	        	
+//	        	
+//	        }
+//	         
+//	        workBreakUpdateDto.setResultCode("000");
+//			
+//		} catch (Exception ex) {
+//			 ex.printStackTrace();
+//			 workBreakUpdateDto.setResultCode("002");
+//			 workBreakUpdateDto.setResultMessage("（Method：changeWorkBreak, Table Name：pt_work_break ,Exception：" + ex.getMessage() + "）");
+//	    }
+//		return;	
+//	}
 	
 	public void getUserWorkReport(UserWorkReportDto userWorkReportDto) throws Exception {
 		var reqHd = userWorkReportDto.getReqHd();
@@ -303,6 +318,7 @@ public class TimeService extends BaseService {
 		            currentSession.setSessionEnd(row.getSessionEnd());
 		            currentSession.setSessionWorkTime(row.getSessionWorkTime());
 		            currentSession.setSessionBreakTime(row.getSessionBreakTime());
+		            currentSession.setStatus(row.getStatus());
 		            currentSession.setBreaks(new ArrayList<>());
 
 		            resDtList.add(currentSession);
@@ -351,6 +367,7 @@ public class TimeService extends BaseService {
 	            currentSession.setSessionEnd(row.getSessionEnd());
 	            currentSession.setSessionWorkTime(row.getSessionWorkTime());
 	            currentSession.setSessionBreakTime(row.getSessionBreakTime());
+	            currentSession.setStatus(row.getStatus());
 	            
 	            resDtList.add(currentSession);
 			}
@@ -382,7 +399,7 @@ public class TimeService extends BaseService {
 			responseHd.setSessionEnd(pvUserWorkSession.getSessionEnd());
 			responseHd.setSessionWorkTime(pvUserWorkSession.getSessionWorkTime());
 			responseHd.setSessionBreakTime(pvUserWorkSession.getSessionBreakTime());
-			
+			responseHd.setStatus(pvUserWorkSession.getStatus());
 			currentUserSessionInfoDto.setResultCode("000");
 		} catch (Exception ex) {
 			ex.printStackTrace();

@@ -46,6 +46,7 @@ public class PvUserWorkReportDao {
             detail.setSessionEnd(rs.getTime("session_end") != null ? rs.getTime("session_end").toLocalTime() : null);
             detail.setSessionWorkTime(rs.getInt("session_work_time"));
             detail.setSessionBreakTime(rs.getInt("session_break_time"));
+            detail.setStatus(rs.getString("status"));
 
             // Break info
             detail.setWorkBreakId(rs.getInt("work_break_id"));
@@ -72,6 +73,7 @@ public class PvUserWorkReportDao {
                 ws.end_time AS session_end,
                 ws.work_time AS session_work_time,
                 ws.break_time AS session_break_time,
+                ws.status,
                 wb.work_break_id,
                 wb.break_start,
                 wb.break_end,

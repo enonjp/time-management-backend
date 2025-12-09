@@ -75,6 +75,7 @@ public class UserWorkReportDto extends BaseDto {
         private LocalTime sessionEnd;
         private Integer sessionWorkTime;  // minutes
         private Integer sessionBreakTime; // minutes
+        private String status; //'NOT_STARTED', 'WORKING', 'BREAK', 'FINISHED'
         
         private List<BreakInfo> breaks;
         

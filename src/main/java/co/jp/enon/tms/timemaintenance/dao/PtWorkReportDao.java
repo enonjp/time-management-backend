@@ -78,7 +78,7 @@ public class PtWorkReportDao {
                      "SET total_work_time = ?, total_break_time = ?, updated_at = CURRENT_TIMESTAMP " +
                      "WHERE work_report_id = ? AND user_id = ? AND work_date = ?";
 
-        return jdbcTemplate.update(
+        int result = jdbcTemplate.update(
             sql,
             ptWorkReport.getTotalWorkTime(),
             ptWorkReport.getTotalBreakTime(),
@@ -86,7 +86,9 @@ public class PtWorkReportDao {
             ptWorkReport.getUserId(),
             java.sql.Date.valueOf(ptWorkReport.getWorkDate())
         );
-    }
+	    jdbcTemplate.execute("COMMIT");
+	    return result;   
+    }    
 
     
 }

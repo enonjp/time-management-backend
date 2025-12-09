@@ -16,6 +16,7 @@ public class PtWorkSession {
     private LocalTime endTime;         // end_time TIME NULL
     private Integer workTime = 0;      // work_time INT DEFAULT 0
     private Integer breakTime = 0;  
+    private String status; //'WORKING' | 'BREAK' | 'FINISHED' | 'NOT_STARTED'
 
 	@JsonFormat(shape = JsonFormat.Shape.ANY, pattern = "yyyy-MM-dd HH:mm:ss")
 	private LocalDateTime createdAt;

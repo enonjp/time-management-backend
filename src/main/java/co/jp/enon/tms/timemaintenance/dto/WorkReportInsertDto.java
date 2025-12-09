@@ -49,6 +49,7 @@ public class WorkReportInsertDto extends BaseDto {
 		// Declaring properties (member variables)
 	    private int workReportId;
 	    private int workSessionId;
+	    private String status;
 	}
 
 }

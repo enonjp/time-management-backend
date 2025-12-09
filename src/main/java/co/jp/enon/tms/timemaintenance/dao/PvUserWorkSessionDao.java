@@ -33,6 +33,7 @@ public class PvUserWorkSessionDao {
         	pvUserWorkSession.setSessionEnd(rs.getTime("end_time") != null ? rs.getTime("end_time").toLocalTime() : null);
         	pvUserWorkSession.setSessionWorkTime(rs.getInt("work_time"));
         	pvUserWorkSession.setSessionBreakTime(rs.getInt("break_time"));
+        	pvUserWorkSession.setStatus(rs.getString("status"));
             return pvUserWorkSession;
         }
     };

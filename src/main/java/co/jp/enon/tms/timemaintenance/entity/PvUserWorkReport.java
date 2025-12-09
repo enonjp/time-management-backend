@@ -20,6 +20,7 @@ public class PvUserWorkReport {
     private LocalTime sessionEnd;         // end_time TIME NULL
     private Integer sessionWorkTime = 0;      // work_time INT DEFAULT 0
     private Integer sessionBreakTime = 0;
+    private String status; //'WORKING' | 'BREAK' | 'FINISHED' | 'NOT_STARTED'
     
     private Integer workBreakId;
 	private LocalTime breakStart;       // corresponds to break_start, NOT NULL

@@ -40,6 +40,8 @@ public class CurrentUserSessionInfoDto extends BaseDto {
         private LocalTime sessionEnd;
         private Integer sessionWorkTime;  // minutes
         private Integer sessionBreakTime; // minutes
+        private String status; // 'WORKING' | 'BREAK' | 'FINISHED' | 'NOT_STARTED'
+        
     }      
         
 }

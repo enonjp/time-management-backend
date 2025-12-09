@@ -22,7 +22,7 @@ public class PtWorkSessionDao {
         System.out.println("this.jdbcTemplate " + this.jdbcTemplate);
     }
     public int save(PtWorkSession session) {
-        String sql = "INSERT INTO pt_work_session (work_report_id, start_time, end_time, work_time, break_time, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NOW(), NOW())";
+        String sql = "INSERT INTO pt_work_session (work_report_id, start_time, end_time, work_time, break_time, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
@@ -35,6 +35,7 @@ public class PtWorkSessionDao {
             }
             ps.setInt(4, session.getWorkTime());
             ps.setInt(5, session.getBreakTime());
+            ps.setString(6, session.getStatus());
             return ps;
         }, keyHolder);
 
@@ -62,7 +63,7 @@ public class PtWorkSessionDao {
     
     public int updateWorkSession(PtWorkSession ptWorkSession) {
         String sql = "UPDATE pt_work_session " +
-                     "SET end_time = ?, work_time = ?, break_time = ?, updated_at = CURRENT_TIMESTAMP " +
+                     "SET end_time = ?, work_time = ?, break_time = ?, status = ?, updated_at = CURRENT_TIMESTAMP " +
                      "WHERE work_session_id = ? AND work_report_id = ?";
 
         return jdbcTemplate.update(
@@ -70,11 +71,22 @@ public class PtWorkSessionDao {
             ptWorkSession.getEndTime() != null ? Time.valueOf( ptWorkSession.getEndTime()) : null,
             		ptWorkSession.getWorkTime(),
             		ptWorkSession.getBreakTime(),
+            		ptWorkSession.getStatus(),
             		ptWorkSession.getWorkSessionId(),
             		ptWorkSession.getWorkReportId()
         );
     }
     
+    public int updateWorkSessionStatus(PtWorkSession ptWorkSession) {
+    	String sql = "UPDATE pt_work_session " +
+                "SET status = ?, updated_at = CURRENT_TIMESTAMP " +
+                "WHERE work_session_id = ? ";
+    	 return jdbcTemplate.update(
+    	            sql,
+    	            ptWorkSession.getStatus(),		
+    	            ptWorkSession.getWorkSessionId()
+    	        );
+    }
     public int getTotalWorkTime(int workReportId) {
         String sql = "SELECT SUM(work_time) AS total_work_time FROM pt_work_session WHERE work_report_id = ?";
 

@@ -34,8 +34,10 @@ public class PtWorkBreakDao {
             PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             ps.setInt(1, ptWorkBreak.getWorkSessionId());
             //  handle nullable break_start
-            if (ptWorkBreak.getBreakStart() != null) { 
-            	ps.setTime(2, Time.valueOf(ptWorkBreak.getBreakStart()));
+            if (ptWorkBreak.getBreakStart() != null) {
+                ps.setTime(2, Time.valueOf(ptWorkBreak.getBreakStart()));
+            } else {
+                ps.setNull(2, java.sql.Types.TIME);
             }
 
             // handle nullable break_end

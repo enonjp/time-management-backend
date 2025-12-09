@@ -34,6 +34,6 @@ public class WorkReportUpdateDto  extends BaseDto {
 	    private String workDate;
 	    private int workReportId;
 	    private int workSessionId;
-	    private LocalTime breakEnd;
+	    private LocalTime endTime;
 	}
 }
