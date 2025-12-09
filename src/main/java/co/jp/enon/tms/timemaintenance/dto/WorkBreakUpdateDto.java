@@ -32,6 +32,7 @@ public class WorkBreakUpdateDto  extends BaseDto {
 		// Declaring properties (member variables)
 	    private int workBreakId;
 	    private int workSessionId;
+	    private LocalTime breakStart;
 	    private LocalTime breakEnd;
 	    private int breakTime;
 	}

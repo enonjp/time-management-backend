@@ -3,11 +3,12 @@ package co.jp.enon.tms.timemaintenance.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import co.jp.enon.tms.timemaintenance.dto.CurrentUserBreakInfoDto;
+//import co.jp.enon.tms.timemaintenance.dto.CurrentUserBreakInfoDto;
 import co.jp.enon.tms.timemaintenance.dto.CurrentUserSessionInfoDto;
 import co.jp.enon.tms.timemaintenance.dto.UserWorkReportDto;
 import co.jp.enon.tms.timemaintenance.dto.WorkBreakInsertDto;
@@ -65,8 +66,21 @@ public class TimeMaintenanceController {
 		return workBreakUpdateDto;     
     }
 	
+	// Start button click
+	@PostMapping("/change-break")
+	@PreAuthorize("hasRole('ROLE_ADMIN')")
+    public WorkBreakUpdateDto changeBreak(@RequestBody WorkBreakUpdateDto workBreakUpdateDto) throws Exception {
+		logger.debug(this.getClass().getName() + "." + Thread.currentThread().getStackTrace()[1].getMethodName());
+		
+		timeService.changeWorkBreak(workBreakUpdateDto);
+		
+		return workBreakUpdateDto;     
+    }
+	
 	// Report
 	@PostMapping("/get-report")
+	@PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')")
+//	@PreAuthorize("hasRole('ROLE_ADMIN')")
     public UserWorkReportDto getReport(@RequestBody UserWorkReportDto userWorkReportDto) throws Exception {
 		logger.debug(this.getClass().getName() + "." + Thread.currentThread().getStackTrace()[1].getMethodName());
 		
@@ -85,15 +99,15 @@ public class TimeMaintenanceController {
 		return currentUserSessionInfoDto;     
     }
 	
-	// get current session info
-	@PostMapping("/get-current-break")
-    public CurrentUserBreakInfoDto getCurrentBreak(@RequestBody CurrentUserBreakInfoDto currentUserBreakInfoDto) throws Exception {
-		logger.debug(this.getClass().getName() + "." + Thread.currentThread().getStackTrace()[1].getMethodName());
-		
-		timeService.getLatestUserBreakInfo(currentUserBreakInfoDto);
-		
-		return currentUserBreakInfoDto;     
-    }
+//	// get current session info
+//	@PostMapping("/get-current-break")
+//    public CurrentUserBreakInfoDto getCurrentBreak(@RequestBody CurrentUserBreakInfoDto currentUserBreakInfoDto) throws Exception {
+//		logger.debug(this.getClass().getName() + "." + Thread.currentThread().getStackTrace()[1].getMethodName());
+//		
+//		timeService.getLatestUserBreakInfo(currentUserBreakInfoDto);
+//		
+//		return currentUserBreakInfoDto;     
+//    }
 	
 	// get current session info
 	@PostMapping("/get-today-sessions")

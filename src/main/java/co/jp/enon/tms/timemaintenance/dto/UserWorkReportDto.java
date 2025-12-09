@@ -34,7 +34,7 @@ public class UserWorkReportDto extends BaseDto {
 
         public RequestHd() {}
 
-       // private Integer userId;
+        private Integer userId;
         private String firstName;
         private String lastName;
         private LocalDate startDate;

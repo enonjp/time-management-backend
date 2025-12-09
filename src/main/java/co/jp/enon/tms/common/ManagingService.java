@@ -392,40 +392,117 @@ public class ManagingService {
 	        if (args[0] instanceof BaseDto) {
 	        	BaseDto baseDto = (BaseDto)args[0];
 	        	resultCode = baseDto.getResultCode();
-	        	if (StringUtils.isNotEmpty(resultCode)) {
-	        		baseDto.setResultMessage(resultCode);
-//	        		String nameLong = getResultMessageRepository(args[0].getClass().getSimpleName(), resultCode);
-//		        	if (StringUtils.isNotEmpty(nameLong)) {
-//		        		baseDto.setResultMessage(nameLong);
-//		        	}
-	        	}
+	        	 // Only proceed if resultCode is present
+	            if (StringUtils.isNotEmpty(resultCode)) {
+	                // If DTO already has a more descriptive message, keep it (do not overwrite).
+	                if (StringUtils.isNotEmpty(baseDto.getResultMessage())) {
+	                    // keep existing resultMessage
+	                } else {
+	                    // Try to get a message from repository
+	                    String messageFromRepo = getResultMessageRepository(args[0].getClass().getSimpleName(), resultCode);
+	                    if (StringUtils.isNotEmpty(messageFromRepo)) {
+	                        baseDto.setResultMessage(messageFromRepo);
+	                    } else {
+	                        // do not set resultMessage to resultCode here; leave it blank
+	                        // (fallback to setRsultToDto logic when needed)
+	                    }
+	                }
+	            }
 	        }
         }
         return resultCode;
     }
-
-    // Add the exception message of the argument to the result message obtained from the result code of the argument and set it in the Dto
+    
+    private String getResultMessageRepository(String dtoName, String resultCode) {
+        // TODO: wire your mapper or repository here (uncomment & implement)
+        // Example:
+        // return pvResultMessageMapper.selectOne(dtoName, resultCode)
+        //         .map(PvResultMessageRepository::getMsgNameLong)
+        //         .orElse("");
+        //
+        // Temporary safe stub: return empty string if not found
+        return "";
+    }
+    
     private void setRsultToDto(JoinPoint jp, String resultCode, String exMessage) {
         Object[] args = jp.getArgs();
 
-        if(args.length > 0){
-	        if (args[0] instanceof BaseDto) {
-	        	BaseDto baseDto = (BaseDto)args[0];
-	        	if (StringUtils.isNotEmpty(resultCode)) {
-		        	baseDto.setResultCode(resultCode);
-		        	baseDto.setResultMessage(resultCode);
-//		        	String nameLong = getResultMessageRepository(args[0].getClass().getSimpleName(), resultCode);
-//		        	if (StringUtils.isNotEmpty(nameLong)) {
-//		        		baseDto.setResultMessage(MessageFormat.format(nameLong, exMessage));
-//		        	} else {
-//			        	baseDto.setResultMessage(exMessage);
-//		        	}
-	        	} else {
-		        	baseDto.setResultMessage(exMessage);
-	        	}
-	        }
+        if (args.length == 0) return;
+
+        if (!(args[0] instanceof BaseDto)) return;
+
+        BaseDto baseDto = (BaseDto) args[0];
+
+        // only set resultCode if provided
+        if (StringUtils.isNotEmpty(resultCode)) {
+            baseDto.setResultCode(resultCode);
         }
+
+        String dtoName = args[0].getClass().getSimpleName();
+
+        // 1) Try repo lookup first (useful for human friendly messages)
+        String repoMessage = StringUtils.isNotEmpty(resultCode)
+                ? getResultMessageRepository(dtoName, resultCode)
+                : "";
+
+        String finalMessage = null;
+
+        // Priority 1: explicit exception/custom message
+        if (StringUtils.isNotEmpty(exMessage)) {
+            // If repo message exists and you want to include exMessage into it, you can format:
+            if (StringUtils.isNotEmpty(repoMessage)) {
+                // If you have placeholders in repoMessage, you can format like below.
+                // Uncomment MessageFormat import and next line if you want formatting:
+                // finalMessage = MessageFormat.format(repoMessage, exMessage);
+                // For safety (no formatting), prefer to append or choose exMessage directly:
+                finalMessage = repoMessage + " : " + exMessage;
+            } else {
+                finalMessage = exMessage;
+            }
+        }
+        // Priority 2: repo message (no exMessage)
+        else if (StringUtils.isNotEmpty(repoMessage)) {
+            finalMessage = repoMessage;
+        }
+        // Priority 3: keep any existing message on DTO
+        else if (StringUtils.isNotEmpty(baseDto.getResultMessage())) {
+            finalMessage = baseDto.getResultMessage();
+        }
+        // Priority 4: last resort — set resultCode as message (avoid if possible)
+        else if (StringUtils.isNotEmpty(resultCode)) {
+            finalMessage = resultCode;
+        }
+
+        baseDto.setResultMessage(finalMessage);
     }
+
+    // Add the exception message of the argument to the result message obtained from the result code of the argument and set it in the Dto
+//    private void setRsultToDto(JoinPoint jp, String resultCode, String exMessage) {
+//        Object[] args = jp.getArgs();
+//
+//        if(args.length > 0){
+//	        if (args[0] instanceof BaseDto) {
+//	        	BaseDto baseDto = (BaseDto)args[0];
+//	        	if (StringUtils.isNotEmpty(resultCode)) {
+//		        	baseDto.setResultCode(resultCode);
+//	        	} 	
+//	        	 String finalMessage = null;
+//
+//	             // Priority 1: exMessage (actual exception message or custom message)
+//	             if (StringUtils.isNotEmpty(exMessage)) {
+//	                 finalMessage = exMessage;
+//	             }
+//	             else if (StringUtils.isNotEmpty(resultCode)) {
+//	                 // Priority 2: lookup message from repository
+//	                 finalMessage = resultCode;
+//	             }
+//
+//	             baseDto.setResultMessage(finalMessage);
+//	        }
+//        }
+//    }
+//    
+   
 
 //	@Autowired
 //	PvResultMessageMapper pvResultMessageMapper;

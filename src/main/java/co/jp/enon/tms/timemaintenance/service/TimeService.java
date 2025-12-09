@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -208,15 +209,65 @@ public class TimeService extends BaseService {
 		return;		
 	}
 	
+	public void changeWorkBreak(WorkBreakUpdateDto workBreakUpdateDto) throws Exception {
+		var reqHd = workBreakUpdateDto.getReqHd();	
+		try { 
+			// get data from pt_work_break table before changing
+			PtWorkBreak ptWorkBreakOld = ptWorkBreakDao.getBreakInfo(reqHd.getWorkSessionId(), reqHd.getWorkBreakId());
+			LocalTime breakStart = ptWorkBreakOld.getBreakStart();
+			if (reqHd.getBreakStart() != null ) {
+				breakStart = reqHd.getBreakStart();
+			}
+			LocalTime breakEnd = ptWorkBreakOld.getBreakEnd();
+			if (reqHd.getBreakEnd() != null) {
+				breakEnd = reqHd.getBreakEnd();
+			}	
+			int totalBreakInMinutes = calculateBreakMinutes(breakStart, breakEnd);
+			boolean updateRequired = false;
+			if (totalBreakInMinutes != ptWorkBreakOld.getBreakTime()) {
+				updateRequired = true;
+			}
+			// change break start and break end and total break time in pt_work_break
+	        PtWorkBreak ptWorkBreak = new PtWorkBreak();
+	        
+	        ptWorkBreak.setWorkBreakId(reqHd.getWorkBreakId());
+	        ptWorkBreak.setWorkSessionId(reqHd.getWorkSessionId());
+	        ptWorkBreak.setBreakStart(breakStart);
+	        ptWorkBreak.setBreakEnd(breakEnd);
+	        ptWorkBreak.setBreakTime(totalBreakInMinutes);
+	        
+	        ptWorkBreakDao.update(ptWorkBreak);
+	        
+	        if (updateRequired == true) {
+	        	// update pt_work_session table with the new workTime and break time
+	        	//ptWorkSession.update()
+	        	
+	        	// update pt_work_report table with total work hours and break times 
+	        	
+	        	
+	        }
+	         
+	        workBreakUpdateDto.setResultCode("000");
+			
+		} catch (Exception ex) {
+			 ex.printStackTrace();
+			 workBreakUpdateDto.setResultCode("002");
+			 workBreakUpdateDto.setResultMessage("（Method：changeWorkBreak, Table Name：pt_work_break ,Exception：" + ex.getMessage() + "）");
+	    }
+		return;	
+	}
+	
 	public void getUserWorkReport(UserWorkReportDto userWorkReportDto) throws Exception {
 		var reqHd = userWorkReportDto.getReqHd();
 		try {
-			List<PvUserWorkReport> listPvUserWorkReport = pvUserWorkReportDao.getUserWorkReport(reqHd.getFirstName(), reqHd.getLastName(), reqHd.getStartDate(), reqHd.getEndDate());
+			List<PvUserWorkReport> listPvUserWorkReport = pvUserWorkReportDao.getUserWorkReport(reqHd.getUserId(), reqHd.getFirstName(), reqHd.getLastName(), reqHd.getStartDate(), reqHd.getEndDate());
 			// Report data not found 
 			if (listPvUserWorkReport == null || listPvUserWorkReport.isEmpty()) {
-				userWorkReportDto.setResultMessage("Report data is null for " +reqHd.getFirstName() + " " + reqHd.getLastName()); // No User Report data found
-				userWorkReportDto.setResultCode("001"); // No User Report data found
-				return;
+				userWorkReportDto.setResultMessage("No report data found");
+			    userWorkReportDto.setResultCode("001");
+			    userWorkReportDto.setResDt(Collections.emptyList());
+			    userWorkReportDto.setResDtTitle(null);
+			    return;  // <-- MUST exit here
 		    }
 			
 			// All rows share same user info
@@ -267,8 +318,10 @@ public class TimeService extends BaseService {
 		        }
 		    }
 		    userWorkReportDto.setResDt(resDtList); 
-		    UserWorkReportDto.ResponseDtTitle responseDtTitle = new UserWorkReportDto.ResponseDtTitle();
-		    userWorkReportDto.setResDtTitle(responseDtTitle);
+		    if (resDtList.size() > 0) {
+		    	UserWorkReportDto.ResponseDtTitle responseDtTitle = new UserWorkReportDto.ResponseDtTitle();
+		    	userWorkReportDto.setResDtTitle(responseDtTitle);
+		    }
 			userWorkReportDto.setResultCode("000");
 		} catch (Exception ex) {
 			ex.printStackTrace();

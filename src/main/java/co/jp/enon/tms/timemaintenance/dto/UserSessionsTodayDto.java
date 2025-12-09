@@ -43,6 +43,7 @@ public class UserSessionsTodayDto extends BaseDto {
         private LocalTime sessionEnd;
         private Integer sessionWorkTime;  // minutes
         private Integer sessionBreakTime; // minutes
+        
 	   
 	} 
 	 

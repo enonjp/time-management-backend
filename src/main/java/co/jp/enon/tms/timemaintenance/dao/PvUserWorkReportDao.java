@@ -57,7 +57,7 @@ public class PvUserWorkReportDao {
         }
     };
     
-    public List<PvUserWorkReport> getUserWorkReport(String firstName, String lastName, LocalDate startDate, LocalDate endDate) {
+    public List<PvUserWorkReport> getUserWorkReport(Integer userId, String firstName, String lastName, LocalDate startDate, LocalDate endDate) {
         StringBuilder sql = new StringBuilder("""
             SELECT 
                 u.user_id,
@@ -86,6 +86,10 @@ public class PvUserWorkReportDao {
         List<Object> params = new ArrayList<>();
 
         // add if userId exists
+        if (userId != null) {
+            sql.append(" AND u.user_id = ?");
+            params.add(userId);
+        }
         if (firstName != null) {
             sql.append(" AND u.first_name = ?");
             params.add(firstName);

@@ -9,6 +9,8 @@ import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.sql.Time;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import co.jp.enon.tms.timemaintenance.entity.PtWorkBreak;
 
@@ -31,15 +33,17 @@ public class PtWorkBreakDao {
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             ps.setInt(1, ptWorkBreak.getWorkSessionId());
-            ps.setTime(2, Time.valueOf(ptWorkBreak.getBreakStart()));
+            //  handle nullable break_start
+            if (ptWorkBreak.getBreakStart() != null) { 
+            	ps.setTime(2, Time.valueOf(ptWorkBreak.getBreakStart()));
+            }
 
             // handle nullable break_end
             if (ptWorkBreak.getBreakEnd() != null) {
                 ps.setTime(3, Time.valueOf(ptWorkBreak.getBreakEnd()));
             } else {
                 ps.setNull(3, java.sql.Types.TIME);
-            }
-
+            } 
             ps.setInt(4, ptWorkBreak.getBreakTime());
             return ps;
         }, keyHolder);
@@ -51,6 +55,7 @@ public class PtWorkBreakDao {
             throw new RuntimeException("Failed to retrieve generated work_break_id.");
         }
     }
+    
     
     public LocalTime getBreakStartTime(int workBreakId, int workSessionId) {
         String sql = "SELECT break_start FROM pt_work_break WHERE work_break_id = ? AND work_session_id = ?";
@@ -90,18 +95,66 @@ public class PtWorkBreakDao {
         }
     }
     
-    public int update(PtWorkBreak ptWorkBreak) {
-        String sql = "UPDATE pt_work_break " +
-                     "SET break_end = ?, break_time = ?, updated_at = NOW() " +
-                     "WHERE work_break_id = ? AND work_session_id = ?";
-
-        return jdbcTemplate.update(sql,
-                ptWorkBreak.getBreakEnd(),      // LocalTime or Time
-                ptWorkBreak.getBreakTime(),     // int minutes
-                ptWorkBreak.getWorkBreakId(),   // int
-                ptWorkBreak.getWorkSessionId()  // int
+    public PtWorkBreak getBreakInfo(Integer workSessionId, Integer workBreakId) {
+        StringBuilder sql = new StringBuilder(
+            "SELECT * FROM pt_work_break WHERE work_break_id = ?"
         );
+        List<Object> params = new ArrayList<>();
+        params.add(workBreakId);
+        
+        // Add session_id condition only if provided
+        if (workSessionId != null) {
+            sql.append(" AND work_session_id = ?");
+            params.add(workSessionId);
+        }
+        try {
+            return jdbcTemplate.queryForObject(
+                sql.toString(),
+                (rs, rowNum) -> {
+                    PtWorkBreak breakRecord = new PtWorkBreak();
+                    breakRecord.setWorkBreakId(rs.getInt("work_break_id"));
+                    breakRecord.setWorkSessionId(rs.getInt("work_session_id"));
+                    breakRecord.setBreakStart(rs.getTime("break_start").toLocalTime());
+                    Time endTime = rs.getTime("break_end");
+                    breakRecord.setBreakEnd(endTime != null ? endTime.toLocalTime() : null);
+                    breakRecord.setBreakTime(rs.getInt("break_time"));
+                    breakRecord.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
+                    breakRecord.setUpdatedAt(rs.getTimestamp("updated_at").toLocalDateTime());
+                    return breakRecord;
+                },
+                params.toArray()
+            );
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
     }
+    
+    public int update(PtWorkBreak ptWorkBreak) {
+        StringBuilder sql = new StringBuilder(
+            "UPDATE pt_work_break SET " +
+            "break_start = COALESCE(?, break_start), " +
+            "break_end = COALESCE(?, break_end), " +
+            "break_time = COALESCE(?, break_time), " +
+            "updated_at = NOW() " +
+            "WHERE work_break_id = ?"
+        );
+
+        // Parameters list (order matters)
+        List<Object> params = new ArrayList<>();
+        params.add(ptWorkBreak.getBreakStart());
+        params.add(ptWorkBreak.getBreakEnd());
+        params.add(ptWorkBreak.getBreakTime());
+        params.add(ptWorkBreak.getWorkBreakId());
+
+        // Only add work_session_id to WHERE if it exists (not null and > 0)
+        if (ptWorkBreak.getWorkSessionId() != null) {
+            sql.append(" AND work_session_id = ?");
+            params.add(ptWorkBreak.getWorkSessionId());
+        }
+
+        return jdbcTemplate.update(sql.toString(), params.toArray());
+    }
+    
     
     public Integer getTotalBreakTime(int workSessionId) {
         String sql = "SELECT SUM(break_time) AS total_break_time FROM pt_work_break WHERE work_session_id = ?";
