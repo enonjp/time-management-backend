@@ -29,10 +29,12 @@ CREATE TABLE IF NOT EXISTS pt_work_session (
     end_time TIME NULL,
     work_time INT DEFAULT 0 COMMENT 'Work duration in minutes for this session',
     break_time INT DEFAULT 0 COMMENT 'Total break time in minutes for this session',
+    status enum('NOT_STARTED','WORKING','BREAK','FINISHED') DEFAULT 'NOT_STARTED',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_report FOREIGN KEY (work_report_id) REFERENCES pt_work_report(work_report_id)
 );
+
 CREATE TABLE IF NOT EXISTS pt_work_break (
     work_break_id INT AUTO_INCREMENT PRIMARY KEY,
     work_session_id INT NOT NULL,
