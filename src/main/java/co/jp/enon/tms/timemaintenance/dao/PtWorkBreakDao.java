@@ -11,7 +11,10 @@ import java.sql.Time;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
+import org.springframework.jdbc.core.RowMapper;
 import co.jp.enon.tms.timemaintenance.entity.PtWorkBreak;
 
 @Repository
@@ -23,6 +26,31 @@ public class PtWorkBreakDao {
         this.jdbcTemplate = jdbcTemplate;
         System.out.println("this.jdbcTemplate " + this.jdbcTemplate);
     }
+    
+    private RowMapper<PtWorkBreak> workBreakRowMapper = new RowMapper<PtWorkBreak>() {
+        @Override
+        public PtWorkBreak mapRow(ResultSet rs, int rowNum) throws SQLException {
+            PtWorkBreak breakRecord = new PtWorkBreak();
+
+            breakRecord.setWorkBreakId(rs.getInt("work_break_id"));
+            breakRecord.setWorkSessionId(rs.getInt("work_session_id"));
+
+            // break_start is NOT NULL
+            breakRecord.setBreakStart(rs.getTime("break_start").toLocalTime());
+
+            // break_end can be NULL
+            Time endTime = rs.getTime("break_end");
+            breakRecord.setBreakEnd(endTime != null ? endTime.toLocalTime() : null);
+
+            breakRecord.setBreakTime(rs.getInt("break_time"));
+
+            // timestamps
+            breakRecord.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
+            breakRecord.setUpdatedAt(rs.getTimestamp("updated_at").toLocalDateTime());
+
+            return breakRecord;
+        }
+    };
     
     public int save(PtWorkBreak ptWorkBreak) {
         String sql = "INSERT INTO pt_work_break (work_session_id, break_start, break_end, break_time, created_at, updated_at) " +
@@ -130,6 +158,15 @@ public class PtWorkBreakDao {
             return null;
         }
     }
+    
+    public List<PtWorkBreak> getBreakInfosForGivenSession(Integer workSessionId) {
+    	String sql = "SELECT * FROM pt_work_break WHERE work_session_id = ?";
+    	return jdbcTemplate.query(con -> {
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setInt(1, workSessionId);
+            return ps;
+        }, workBreakRowMapper);
+	}
     
     public int update(PtWorkBreak ptWorkBreak) {
         StringBuilder sql = new StringBuilder(

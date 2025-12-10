@@ -34,12 +34,15 @@ public class PvUserWorkSessionDao {
         	pvUserWorkSession.setSessionWorkTime(rs.getInt("work_time"));
         	pvUserWorkSession.setSessionBreakTime(rs.getInt("break_time"));
         	pvUserWorkSession.setStatus(rs.getString("status"));
+        	// work report info
+        	pvUserWorkSession.setTotalWorkTime(rs.getInt("total_work_time"));
+        	pvUserWorkSession.setTotalBreakTime(rs.getInt("total_break_time"));
             return pvUserWorkSession;
         }
     };
     
     public PvUserWorkSession getLatestSessionForUser(int userId) {
-        String sql = "SELECT ws.* , wr.user_id FROM pt_work_session ws " +
+        String sql = "SELECT ws.* , wr.user_id, wr.total_work_time, wr.total_break_time FROM pt_work_session ws " +
         		"JOIN pt_work_report wr ON ws.work_report_id = wr.work_report_id " +
                      "WHERE wr.user_id = ?  AND wr.work_date = CURDATE() " +
                      "ORDER BY ws.start_time DESC " +

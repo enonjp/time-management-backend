@@ -20,7 +20,7 @@ import co.jp.enon.tms.timemaintenance.dao.PvUserWorkReportDao;
 import co.jp.enon.tms.timemaintenance.dao.PvUserWorkSessionBreakDao;
 import co.jp.enon.tms.timemaintenance.dao.PvUserWorkSessionDao;
 import co.jp.enon.tms.timemaintenance.dto.CurrentUserBreakInfoDto;
-import co.jp.enon.tms.timemaintenance.dto.CurrentUserSessionInfoDto;
+import co.jp.enon.tms.timemaintenance.dto.LatestUserSessionInfoDto;
 import co.jp.enon.tms.timemaintenance.dto.UserSessionsTodayDto;
 import co.jp.enon.tms.timemaintenance.dto.UserWorkReportDto;
 import co.jp.enon.tms.timemaintenance.dto.WorkBreakInsertDto;
@@ -384,27 +384,45 @@ public class TimeService extends BaseService {
 		return;	
 	}
 	
-	public void getLatestUserSessionInfo(CurrentUserSessionInfoDto currentUserSessionInfoDto) throws Exception {
-		var reqHd = currentUserSessionInfoDto.getReqHd();
+	public void getLatestUserSessionInfo(LatestUserSessionInfoDto latestUserSessionInfoDto) throws Exception {
+		var reqHd = latestUserSessionInfoDto.getReqHd();
 		try {
 			PvUserWorkSession pvUserWorkSession = pvUserWorkSessionDao.getLatestSessionForUser(reqHd.getUserId());
 			if (pvUserWorkSession == null ) {
-				currentUserSessionInfoDto.setResultMessage(" No User session data found for userId: " + reqHd.getUserId());
-				currentUserSessionInfoDto.setResultCode("001"); // No User session data found
+				latestUserSessionInfoDto.setResultMessage(" No User session data found for userId: " + reqHd.getUserId());
+				latestUserSessionInfoDto.setResultCode("001"); // No User session data found
 				return;
 		    }
-			CurrentUserSessionInfoDto.ResponseHd responseHd = currentUserSessionInfoDto.getResHd();
+			List<PtWorkBreak> listPtWorkBreak = ptWorkBreakDao.getBreakInfosForGivenSession(pvUserWorkSession.getWorkSessionId());
+			
+			LatestUserSessionInfoDto.ResponseHd responseHd = latestUserSessionInfoDto.getResHd();
 			responseHd.setWorkSessionId(pvUserWorkSession.getWorkSessionId());
 			responseHd.setSessionStart(pvUserWorkSession.getSessionStart());
 			responseHd.setSessionEnd(pvUserWorkSession.getSessionEnd());
 			responseHd.setSessionWorkTime(pvUserWorkSession.getSessionWorkTime());
 			responseHd.setSessionBreakTime(pvUserWorkSession.getSessionBreakTime());
 			responseHd.setStatus(pvUserWorkSession.getStatus());
-			currentUserSessionInfoDto.setResultCode("000");
+			responseHd.setTotalWorkTimeForTheDay(pvUserWorkSession.getTotalWorkTime());
+			responseHd.setTotalBreakTimeForTheDay(pvUserWorkSession.getTotalBreakTime());
+			responseHd.setBreaks(new ArrayList<>());
+			
+			// add breakInfo to the responseHd
+			if (listPtWorkBreak != null) {
+				for (PtWorkBreak row : listPtWorkBreak) { 
+				 	LatestUserSessionInfoDto.ResponseHd.BreakInfo breakInfo = new LatestUserSessionInfoDto.ResponseHd.BreakInfo();
+		            breakInfo.setWorkBreakId(row.getWorkBreakId());
+		            breakInfo.setBreakStart(row.getBreakStart());
+		            breakInfo.setBreakEnd(row.getBreakEnd());
+		            breakInfo.setBreakDuration(row.getBreakTime());
+		            
+		            responseHd.getBreaks().add(breakInfo);
+				}    
+	         }				
+			latestUserSessionInfoDto.setResultCode("000");
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			currentUserSessionInfoDto.setResultCode("002");
-			currentUserSessionInfoDto.setResultMessage("（Method：getLatestUserSessionInfo ,Exception while fetching user session Data：" + ex.getMessage() + "）");
+			latestUserSessionInfoDto.setResultCode("002");
+			latestUserSessionInfoDto.setResultMessage("（Method：getLatestUserSessionInfo ,Exception while fetching user session Data：" + ex.getMessage() + "）");
 	    }
 		return;	
 	}

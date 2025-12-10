@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 //import co.jp.enon.tms.timemaintenance.dto.CurrentUserBreakInfoDto;
-import co.jp.enon.tms.timemaintenance.dto.CurrentUserSessionInfoDto;
+import co.jp.enon.tms.timemaintenance.dto.LatestUserSessionInfoDto;
 import co.jp.enon.tms.timemaintenance.dto.UserWorkReportDto;
 import co.jp.enon.tms.timemaintenance.dto.WorkBreakInsertDto;
 import co.jp.enon.tms.timemaintenance.dto.WorkBreakUpdateDto;
@@ -89,14 +89,14 @@ public class TimeMaintenanceController {
 		return userWorkReportDto;     
     }
 	
-	// get current session info
-	@PostMapping("/get-current-session")
-    public CurrentUserSessionInfoDto getCurrentSession(@RequestBody CurrentUserSessionInfoDto currentUserSessionInfoDto) throws Exception {
+	// get last session info of today with break info 
+	@PostMapping("/get-latest-session")
+    public LatestUserSessionInfoDto getLatestSession(@RequestBody LatestUserSessionInfoDto latestUserSessionInfoDto) throws Exception {
 		logger.debug(this.getClass().getName() + "." + Thread.currentThread().getStackTrace()[1].getMethodName());
 		
-		timeService.getLatestUserSessionInfo(currentUserSessionInfoDto);
+		timeService.getLatestUserSessionInfo(latestUserSessionInfoDto);
 		
-		return currentUserSessionInfoDto;     
+		return latestUserSessionInfoDto;     
     }
 	
 //	// get current session info

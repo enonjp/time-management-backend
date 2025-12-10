@@ -14,5 +14,7 @@ public class PvUserWorkSession {
     private Integer sessionWorkTime = 0;      // work_time INT DEFAULT 0
     private Integer sessionBreakTime = 0;
     private String status; // 'WORKING' | 'BREAK' | 'FINISHED' | 'NOT_STARTED'
+    private Integer totalWorkTime = 0; //from pt_work_report
+    private Integer totalBreakTime = 0; //from pt_work_report
 	
 }
