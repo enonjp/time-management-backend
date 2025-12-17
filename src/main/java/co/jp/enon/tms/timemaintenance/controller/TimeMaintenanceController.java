@@ -10,11 +10,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 //import co.jp.enon.tms.timemaintenance.dto.CurrentUserBreakInfoDto;
 import co.jp.enon.tms.timemaintenance.dto.LatestUserSessionInfoDto;
+import co.jp.enon.tms.timemaintenance.dto.UnfinishedUserSessionInfoDto;
 import co.jp.enon.tms.timemaintenance.dto.UserWorkReportDto;
+import co.jp.enon.tms.timemaintenance.dto.WorkBreakChangeDto;
 import co.jp.enon.tms.timemaintenance.dto.WorkBreakInsertDto;
 import co.jp.enon.tms.timemaintenance.dto.WorkBreakUpdateDto;
 import co.jp.enon.tms.timemaintenance.dto.WorkReportInsertDto;
 import co.jp.enon.tms.timemaintenance.dto.WorkReportUpdateDto;
+import co.jp.enon.tms.timemaintenance.dto.WorkSessionUpdateDto;
 import co.jp.enon.tms.timemaintenance.dto.UserSessionsTodayDto;
 import co.jp.enon.tms.timemaintenance.service.TimeService;
 
@@ -67,14 +70,25 @@ public class TimeMaintenanceController {
     }
 	
 	// Start button click
-	@PostMapping("/change-break")
+	@PostMapping("/change-break-info")
 	@PreAuthorize("hasRole('ROLE_ADMIN')")
-    public WorkBreakUpdateDto changeBreak(@RequestBody WorkBreakUpdateDto workBreakUpdateDto) throws Exception {
+    public WorkBreakChangeDto changeBreakInfo(@RequestBody WorkBreakChangeDto workBreakChangeDto) throws Exception {
 		logger.debug(this.getClass().getName() + "." + Thread.currentThread().getStackTrace()[1].getMethodName());
 		
-//		timeService.changeWorkBreak(workBreakUpdateDto);
+		timeService.changeWorkBreak(workBreakChangeDto);
 		
-		return workBreakUpdateDto;     
+		return workBreakChangeDto;     
+    }
+	
+	// end button click
+	@PostMapping("/change-session-info")
+	@PreAuthorize("hasRole('ROLE_ADMIN')")
+    public WorkSessionUpdateDto changeSessionInfo(@RequestBody WorkSessionUpdateDto workSessionUpdateDto) throws Exception {
+		logger.debug(this.getClass().getName() + "." + Thread.currentThread().getStackTrace()[1].getMethodName());
+		
+		//timeService.updateWorkSessionInfo(workSessionUpdateDto);
+		
+		return workSessionUpdateDto;     
     }
 	
 	// Report
@@ -87,6 +101,16 @@ public class TimeMaintenanceController {
 		timeService.getUserWorkReport(userWorkReportDto);
 		
 		return userWorkReportDto;     
+    }
+	
+	// get all ids if the sessions of today are not closed
+	@PostMapping("/get-unfinished-session-info-today")
+    public UnfinishedUserSessionInfoDto getUnfinishedUserSessionInfo(@RequestBody UnfinishedUserSessionInfoDto unfinishedUserSessionInfoDto) throws Exception {
+		logger.debug(this.getClass().getName() + "." + Thread.currentThread().getStackTrace()[1].getMethodName());
+		
+		timeService.getUnfinishedUserSessionInfo(unfinishedUserSessionInfoDto);
+		
+		return unfinishedUserSessionInfoDto;     
     }
 	
 	// get last session info of today with break info 

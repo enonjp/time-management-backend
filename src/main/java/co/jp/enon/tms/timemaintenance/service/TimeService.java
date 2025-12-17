@@ -17,10 +17,12 @@ import co.jp.enon.tms.timemaintenance.dao.PtWorkBreakDao;
 import co.jp.enon.tms.timemaintenance.dao.PtWorkReportDao;
 import co.jp.enon.tms.timemaintenance.dao.PtWorkSessionDao;
 import co.jp.enon.tms.timemaintenance.dao.PvUserWorkReportDao;
+import co.jp.enon.tms.timemaintenance.dao.PvUserWorkReportSessionBreakDao;
 import co.jp.enon.tms.timemaintenance.dao.PvUserWorkSessionBreakDao;
 import co.jp.enon.tms.timemaintenance.dao.PvUserWorkSessionDao;
 import co.jp.enon.tms.timemaintenance.dto.CurrentUserBreakInfoDto;
 import co.jp.enon.tms.timemaintenance.dto.LatestUserSessionInfoDto;
+import co.jp.enon.tms.timemaintenance.dto.UnfinishedUserSessionInfoDto;
 import co.jp.enon.tms.timemaintenance.dto.UserSessionsTodayDto;
 import co.jp.enon.tms.timemaintenance.dto.UserWorkReportDto;
 import co.jp.enon.tms.timemaintenance.dto.WorkBreakChangeDto;
@@ -32,6 +34,7 @@ import co.jp.enon.tms.timemaintenance.entity.PtWorkBreak;
 import co.jp.enon.tms.timemaintenance.entity.PtWorkReport;
 import co.jp.enon.tms.timemaintenance.entity.PtWorkSession;
 import co.jp.enon.tms.timemaintenance.entity.PvUserWorkReport;
+import co.jp.enon.tms.timemaintenance.entity.PvUserWorkReportSessionBreak;
 import co.jp.enon.tms.timemaintenance.entity.PvUserWorkSession;
 import co.jp.enon.tms.timemaintenance.entity.PvUserWorkSessionBreak;
 
@@ -56,6 +59,9 @@ public class TimeService extends BaseService {
 	
 	@Autowired
 	PvUserWorkSessionBreakDao pvUserWorkSessionBreakDao;
+	
+	@Autowired
+	PvUserWorkReportSessionBreakDao pvUserWorkReportSessionBreakDao;
 	
 	public void saveWorkReportWithSession(WorkReportInsertDto workReportInsertDto) throws Exception {
 	    var reqHd = workReportInsertDto.getReqHd();
@@ -479,6 +485,34 @@ public class TimeService extends BaseService {
 			currentUserBreakInfoDto.setResultCode("002");
 			currentUserBreakInfoDto.setResultMessage("（Method：getLatestUserBreakInfo ,Exception while fetching user break Data：" + ex.getMessage() + "）");
 	    }
+		return;
+	}
+	
+	public void getUnfinishedUserSessionInfo(UnfinishedUserSessionInfoDto unfinishedUserSessionInfoDto) throws Exception {
+		var reqHd = unfinishedUserSessionInfoDto.getReqHd();
+		if (reqHd.getUserId() != null) {
+			try {
+				PvUserWorkReportSessionBreak pvUserWorkReportSessionBreak = pvUserWorkReportSessionBreakDao.getUserWorkReportSessionBreakInfo(reqHd.getUserId());
+				if (pvUserWorkReportSessionBreak == null ) {
+					unfinishedUserSessionInfoDto.setResultMessage(" No data found for userId: " + reqHd.getUserId());
+					unfinishedUserSessionInfoDto.setResultCode("001"); // No User break data found
+					return;
+			    }
+				UnfinishedUserSessionInfoDto.ResponseHd responseHd = unfinishedUserSessionInfoDto.getResHd();
+				responseHd.setWorkReportId(pvUserWorkReportSessionBreak.getWorkReportId());
+				responseHd.setWorkSessionId(pvUserWorkReportSessionBreak.getWorkSessionId());
+				responseHd.setWorkBreakId(pvUserWorkReportSessionBreak.getWorkBreakId());
+				responseHd.setStatus(pvUserWorkReportSessionBreak.getStatus());
+				unfinishedUserSessionInfoDto.setResultCode("000");
+			} catch (Exception ex) {
+				ex.printStackTrace();
+				unfinishedUserSessionInfoDto.setResultCode("002");
+				unfinishedUserSessionInfoDto.setResultMessage("（Method：getUnfinishedUserSessionInfo ,Exception while fetching Data：" + ex.getMessage() + "）");
+		    }
+		} else {
+			unfinishedUserSessionInfoDto.setResultCode("001");
+			unfinishedUserSessionInfoDto.setResultMessage("User Id Missing");
+		}
 		return;
 	}
 	
