@@ -458,7 +458,8 @@ public class TimeService extends BaseService {
 				latestUserSessionInfoDto.setResultMessage("（Method：getLatestUserSessionInfo ,Exception while fetching user session Data：" + ex.getMessage() + "）");
 		    }
 		} else {
-			latestUserSessionInfoDto.setResultCode("000");
+			latestUserSessionInfoDto.setResultMessage(" user Id is not set");
+			latestUserSessionInfoDto.setResultCode("001");
 		}
 		return;	
 	}
