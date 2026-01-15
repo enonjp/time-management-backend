@@ -6,9 +6,15 @@ public class Status {
     public static String CODE_ERROR = "error";
 
     private String code;
+    private String message;
 
     public Status(String code){
         this.code = code;
+    }
+    
+    public Status(String code, String message) {
+        this.code = code;
+        this.message = message;
     }
 
     public String getCode() {
@@ -17,5 +23,13 @@ public class Status {
 
     public void setCode(String code) {
         this.code = code;
+    }
+    
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
     }
 }
