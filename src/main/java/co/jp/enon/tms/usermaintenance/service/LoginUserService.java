@@ -71,7 +71,7 @@ public class LoginUserService implements UserDetailsService {
 	    return ImplementsUserDetails.build(
 	            user.getUserId(),
 	            loginEmail,
-	            user.getPassword(),   // <-- must be the hashed password from DB
+	            user.getPassword(),   // must be the hashed password from DB
 	            authorities
 	    );
 	}
@@ -106,7 +106,7 @@ public class LoginUserService implements UserDetailsService {
 	    return "";
 	}
 	
-	public void registerUser(UserInsertDto userInsertDto) throws Exception {
+	public void registerUser(UserInsertDto userInsertDto) {
 	    var reqHd = userInsertDto.getReqHd();
 
 	    PtUser user = new PtUser();
@@ -120,40 +120,45 @@ public class LoginUserService implements UserDetailsService {
 	    user.setActive((byte) 0); // default active
 	    try {
 	        ptUserDao.save(user);    
-	        userInsertDto.setResultCode("000");
 	    } catch (DuplicateKeyException ex) {
-	        userInsertDto.setResultCode("002");
-	        userInsertDto.setResultMessage("（Method：insert, Table Name：user, Email：" + reqHd.getEmail() + "）");
+	    	throw ex;    
+	    } catch (Exception ex) {
+	    	  // Unexpected failure
+	        throw new RuntimeException("Failed to register user", ex);
 	    }
 	    return;
 	}
 	
-	public String updateResetToken(String email) {
+	public void updateResetToken(String email) {
         PtUser user = ptUserDao.findByEmail(email);
-        if (user == null) return null;
+        if (user == null) return;
 
         String token = UUID.randomUUID().toString();
         LocalDateTime expiry = LocalDateTime.now().plusHours(1);
         user.setResetPasswordToken(token);
         user.setResetTokenExpiry(expiry);
 
-        int updatedRows = ptUserDao.updateToken(user);
-        return updatedRows > 0 ? token : null;
+        ptUserDao.updateToken(user);
     }
 	
 	// Verify token and reset password
-    public String resetPassword(String token, String newPassword) {
+    public void resetPassword(String token, String newPassword) {
         PtUser user = ptUserDao.findByResetPasswordToken(token);
         if (user == null) {
-            return "Invalid or expired token.";
+        	throw new IllegalArgumentException("Invalid or expired token");
         }
+        if (user.getResetTokenExpiry() != null &&
+            user.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Invalid or expired token");
+        }
+
         // Encode the password with BCrypt
         String encodedPassword = passwordEncoder.encode(newPassword);
         user.setPassword(encodedPassword);
         user.setResetPasswordToken(null); // clear token
         user.setResetTokenExpiry(null);
         ptUserDao.updatePassword(user);
-        return "Password reset successful!";
+      
     } 	
 
 }

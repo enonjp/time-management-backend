@@ -314,7 +314,7 @@ public class TimeService extends BaseService {
 			    userWorkReportDto.setResultCode("001");
 			    userWorkReportDto.setResDt(Collections.emptyList());
 			    userWorkReportDto.setResDtTitle(null);
-			    return;  // <-- MUST exit here
+			    return;  // MUST exit here as there is no data
 		    }
 			
 			// All rows share same user info

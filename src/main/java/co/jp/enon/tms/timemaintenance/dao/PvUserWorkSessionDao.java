@@ -63,7 +63,9 @@ public class PvUserWorkSessionDao {
     	String sql = """
                 SELECT 
                     ws.*, 
-                    wr.user_id 
+                    wr.user_id,
+                    wr.total_work_time,
+                    wr.total_break_time
                 FROM pt_work_session ws
                 JOIN pt_work_report wr 
                     ON ws.work_report_id = wr.work_report_id

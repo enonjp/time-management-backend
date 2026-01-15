@@ -181,6 +181,10 @@ public class ManagingService {
         		//		jp.getSignature(), ex.toString(), ex.getStackTrace()[0].toString());
         		consoleLogger.error("\njp.getSignature() => {}\nex.toString() => {}\nex.getStackTrace()[0].toString() => {}",
     	        				jp.getSignature(), ex.toString(), ex.getStackTrace()[0].toString());
+        		  // DO NOT swallow technical exceptions
+        	    if (ex instanceof org.springframework.dao.DuplicateKeyException) {
+        	        throw ex; // let @RestControllerAdvice handle it
+        	    }
         		boolean result = setExceptionToDto(jp, ex);
         		if (result == false) {
         			// BaseDto の ResultCode、ResultMessge に例外情報をセットできなかったときは例外をスローする

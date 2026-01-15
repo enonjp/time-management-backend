@@ -5,6 +5,7 @@ import jakarta.validation.ValidationException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
@@ -15,83 +16,86 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import co.jp.enon.tms.common.exception.NotFoundItemException;
 
-
-// when exception occur, return HttpStatus
 @RestControllerAdvice
 public class ErrorController {
-//public class ErrorController extends MyExceptionHandler {
 
-	private static final Logger log = LoggerFactory.getLogger(ErrorController.class);
+    private static final Logger log =
+            LoggerFactory.getLogger(ErrorController.class);
 
-    /**
-     *
-     * @param req
-     * @param ex
-     * @return
-     */
     @ExceptionHandler(ValidationException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)	// 400
-    public Response handleValidationException(HttpServletRequest req, ValidationException ex){
-        return Response.createErrorResponse(ex);
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Response handleValidationException(
+            HttpServletRequest request,
+            ValidationException ex) {
+
+        log.warn("Validation error: {}", ex.getMessage());
+        return ResponseFactory.error(ex, request.getRequestURI());
+    }
+    
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Response handleIllegalArgument(
+            HttpServletRequest request,
+            IllegalArgumentException ex) {
+
+        return ResponseFactory.error(ex, request.getRequestURI());
     }
 
-    /**
-    * Error when access from an unauthorized user is denied
-    * @param req
-    * @param ex
-    * @return
-    */
-   @ExceptionHandler(AuthenticationException.class)
-   @ResponseStatus(HttpStatus.UNAUTHORIZED)	// 401
-   public Response handleUnAuthenticationException(HttpServletRequest req, ValidationException ex){
-       return Response.createErrorResponse(ex);
-   }
+    @ExceptionHandler(AuthenticationException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public Response handleAuthenticationException(
+            HttpServletRequest request,
+            AuthenticationException ex) {
 
-    /**
-     * Error if not found
-     * @param request
-     * @param ex
-     * @return
-     */
+        log.warn("Authentication error: {}", ex.getMessage());
+        return ResponseFactory.error(ex, request.getRequestURI());
+    }
+
     @ExceptionHandler(NotFoundItemException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)	// 404
-    public Response handleNotFoundItemException(HttpServletRequest request, NotFoundItemException ex){
-        return Response.createErrorResponse(ex);
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Response handleNotFoundItemException(
+            HttpServletRequest request,
+            NotFoundItemException ex) {
+
+        return ResponseFactory.error(ex, request.getRequestURI());
     }
 
-    /**
-     * Execution of a method that is not allowed
-     * @param request
-     * @param ex
-     * @return
-     */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    @ResponseStatus(HttpStatus.FORBIDDEN)	// 403
-    public Response handleMethodNotSupportedException(HttpServletRequest request, HttpRequestMethodNotSupportedException ex){
-        return Response.createErrorResponse(ex);
+    @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED) // ✅ 405, not 403
+    public Response handleMethodNotSupported(
+            HttpServletRequest request,
+            HttpRequestMethodNotSupportedException ex) {
+
+        return ResponseFactory.error(ex, request.getRequestURI());
     }
 
-    /**
-     * Errors not handled above
-     *
-     * @param request
-     * @param ex
-     * @return
-     * @throws Exception
-     */
+    @ExceptionHandler(AccessDeniedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public Response handleAccessDenied(
+            HttpServletRequest request,
+            AccessDeniedException ex) {
+
+        return ResponseFactory.error(ex, request.getRequestURI());
+    }
+    
+    @ExceptionHandler(DuplicateKeyException.class)
+    @ResponseStatus(HttpStatus.CONFLICT) // 409
+    public Response handleDuplicateKey(
+            HttpServletRequest request,
+            DuplicateKeyException ex) {
+
+        log.warn("Duplicate key error: {}", ex.getMessage());
+        return ResponseFactory.error(ex, request.getRequestURI());
+    }
+
     @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)	// 500
-    public Response handleException(HttpServletRequest request, Exception ex) throws Exception {
-    //public ResponseEntity<Object> handleException(HttpServletRequest request, Exception ex) throws Exception {
-    	if (ex instanceof AccessDeniedException) {
-    		// An error occurred in @ExceptionHandler(AccessDeniedException.class) and cannot be handled by handleAccessDeniedException().
-    		// Rethrow this to respond to an error when access is denied to an unauthorized user by AuthEntryPointJwt.commence().
-    		log.error("{}: {}", ex.getClass().getSimpleName(), ex.getMessage());
-            //return new ResponseEntity<>(getBody(HttpStatus.UNAUTHORIZED, ex, ex.getMessage()), new HttpHeaders(), HttpStatus.UNAUTHORIZED);
-    		//throw ex;
-    		return Response.createErrorResponse(ex);
-    	}
-		log.error("{} : {}", ex.toString(), ex.getMessage());
-        return Response.createErrorResponse(ex);
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public Response handleGeneric(
+            HttpServletRequest request,
+            Exception ex) {
+
+        log.error("Unhandled exception", ex);
+        return ResponseFactory.error(ex, request.getRequestURI());
     }
 }
+
