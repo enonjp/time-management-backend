@@ -19,22 +19,22 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import co.jp.enon.tms.usermaintenance.service.LoginUserService;
 
-// 認可処理を行うフィルターをオーバーライドするためにOncePerRequestFilterクラスを継承する
+//extend OncePerRequestFilter class to Overwrite the filter that handles authorisation 
 public class AuthTokenFilter extends OncePerRequestFilter {
 
-	// JWTの認可処理を使用するためのクラスをSpringに登録して呼び出し可能にする
+	// JWT authorisation processing class in Spring
 	@Autowired
 	private JwtUtils jwtUtils;
 
-	// DBからログインユーザの情報を取得するクラスをSpringに登録して呼び出し可能にする
+	// this class retrieves the logged-in user information from the DB in Spring
 	@Autowired
 	//private ImplementsUserDetailsService userDetailsService;
-    private LoginUserService loginUserServie;
+    private LoginUserService loginUserService;
 	//private RoleService roleServie;
 
 	private static final Logger logger = LoggerFactory.getLogger(AuthTokenFilter.class);
 
-	// 認可処理を行うフィルター
+	// Filter that 
 	// "/api/auth/signin"にリンクされたLoginController.authenticateUser()を実行する前に、このdoFilterInternal()が呼び出される。
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -55,7 +55,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 					// jwtが正しい場合、ユーザ名をjwtから取り出してDBを検索してRoleを取得する。
 					String email= jwtUtils.getUserNameFromJwtToken(jwt);
 
-					UserDetails userDetails = loginUserServie.loadUserByUsername(email);
+					UserDetails userDetails = loginUserService.loadUserByUsername(email);
 					
 					logger.info("loadUserByUsername called with email: {}", email);
 					logger.info("DB password (hashed) = {}",userDetails.getPassword());

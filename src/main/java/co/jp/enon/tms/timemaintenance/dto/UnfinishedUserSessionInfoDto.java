@@ -1,8 +1,6 @@
 package co.jp.enon.tms.timemaintenance.dto;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 import co.jp.enon.tms.common.BaseDto;
 import lombok.Data;
